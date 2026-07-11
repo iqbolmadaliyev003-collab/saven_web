@@ -17,10 +17,12 @@ const helpOpen = ref(false);
 async function handleSubmit() {
   loading.value = true;
   try {
-    await authStore.login(login.value, password.value);
+    // Backend ishlamayotgan paytda vaqtincha quyidagi tekshiruvlarni o'chirmay, kommentariya sifatida qoldiramiz:
+    // await authStore.login(login.value, password.value);
+    // router.push("/asosiy");
     router.push("/asosiy");
   } catch (e) {
-    toast.error("Login yoki parol noto'g'ri");
+    // toast.error("Login yoki parol noto'g'ri");
   } finally {
     loading.value = false;
   }
