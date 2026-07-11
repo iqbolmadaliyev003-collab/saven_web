@@ -1,4 +1,128 @@
+<template>
+  <DashboardLayout>
+    <div class="space-y-4">
+      <AppCard class="p-5 reveal" style="--d: 0ms">
+        <h1 class="text-xl font-bold">Asosiy</h1>
+        <p class="text-sm text-muted capitalize">Bugun, {{ today }}</p>
+      </AppCard>
+
+      <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <AppCard v-for="(s, i) in statCards" :key="s.label"
+          class="reveal p-4 transition-transform duration-300 hover:-translate-y-1 hover:shadow-md"
+          :style="{ '--d': `${80 + i * 80}ms` }">
+          <p class="text-xs text-muted">{{ s.label }}</p>
+          <p class="mt-1 text-2xl font-bold">
+            <span class="counter">{{ s.display }}</span>
+          </p>
+        </AppCard>
+      </div>
+
+      <div class="grid gap-4 lg:grid-cols-3">
+        <AppCard class="reveal p-5 lg:col-span-2" style="--d: 400ms">
+          <h2 class="mb-4 font-semibold">Haftalik tashriflar</h2>
+          <div class="flex h-64 gap-3">
+            <!-- y-axis -->
+            <div class="flex flex-col justify-between py-0.5 text-xs text-muted">
+              <span v-for="tick in yTicks" :key="tick">{{ tick }}</span>
+            </div>
+
+            <div class="relative flex flex-1 items-end justify-between gap-2 border-l border-border pl-3">
+              <!-- gridlines -->
+              <div class="pointer-events-none absolute inset-0 left-3 flex flex-col justify-between py-0.5">
+                <span v-for="tick in yTicks" :key="'g' + tick" class="border-t border-dashed border-border/60"></span>
+              </div>
+
+              <div v-for="(w, i) in weekdays" :key="w.day"
+                class="group relative z-10 flex flex-1 flex-col items-center gap-1">
+                <div
+                  class="bar w-full rounded-t-lg bg-primary transition-[height,opacity] duration-700 ease-out group-hover:brightness-110"
+                  :style="{
+                    height: barsGrown ? `${(w.visits / maxVisits) * 200}px` : '0px',
+                    transitionDelay: `${500 + i * 70}ms`,
+                  }" :title="`${w.fullDay}: ${w.visits} tashrif`"></div>
+                <span class="text-xs text-muted">{{ w.day }}</span>
+              </div>
+            </div>
+          </div>
+        </AppCard>
+
+        <AppCard class="reveal p-5" style="--d: 480ms">
+          <h2 class="mb-3 flex items-center gap-2 font-semibold">
+            <span class="bell inline-block">🔔</span> Bildirishnomalar
+          </h2>
+          <ul class="space-y-3">
+            <li v-for="(n, i) in notifications" :key="n.id"
+              class="reveal-side flex items-start justify-between gap-2 text-sm"
+              :style="{ '--d': `${600 + i * 90}ms` }">
+              <div>
+                <p class="font-medium">{{ n.title }}</p>
+                <p class="text-xs text-muted">{{ n.description }}</p>
+              </div>
+              <span v-if="!n.read" class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-success"
+                :class="{ 'animate-pulse-dot': !n.read }"></span>
+            </li>
+            <li v-if="!notifications.length" class="text-sm text-muted">Bildirishnomalar yo'q</li>
+          </ul>
+          <RouterLink to="/bildirishnomalar"
+            class="mt-3 flex w-full items-center justify-center rounded-full border border-border px-4 py-2 text-sm transition-colors hover:bg-secondary">
+            Barchasini ko'rish ›
+          </RouterLink>
+        </AppCard>
+      </div>
+
+      <AppCard class="reveal p-5" style="--d: 560ms">
+        <h2 class="mb-4 font-semibold">Oxirgi mijozlar</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b text-left text-muted">
+                <th class="pb-2 font-normal">Mijoz</th>
+                <th class="pb-2 font-normal">Xizmat</th>
+                <th class="pb-2 font-normal">Chegirma</th>
+                <th class="pb-2 font-normal">Asl narx (so'm)</th>
+                <th class="pb-2 font-normal">To'langan (so'm)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(r, i) in recent" :key="i"
+                class="reveal-row border-b transition-colors last:border-none hover:bg-secondary/60"
+                :style="{ '--d': `${640 + i * 60}ms` }">
+                <td class="py-3">
+                  <div class="flex items-center gap-2">
+                    <span
+                      class="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
+                      {{ initials(r.name) }}
+                    </span>
+                    {{ r.name }}
+                  </div>
+                </td>
+                <td>{{ r.service }}</td>
+                <td>
+                  <span class="rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
+                    {{ r.discountPercent }}%
+                  </span>
+                </td>
+                <td class="text-muted line-through">{{ fmt(r.originalPrice) }}</td>
+                <td class="font-semibold">{{ fmt(r.finalPrice) }}</td>
+              </tr>
+              <tr v-if="!recent.length">
+                <td colspan="5" class="py-4 text-center text-muted">Hozircha ma'lumot yo'q</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </AppCard>
+    </div>
+  </DashboardLayout>
+</template>
+
 <script setup>
+/*
+  Bu qismda mavjud logikangiz (props/composables) saqlanadi:
+  today, stats, weekdays, maxVisits, notifications, recent, fmt, initials
+  — ular allaqachon loyihangizda mavjud deb faraz qilindi.
+  Quyida faqat animatsiya uchun zarur bo'lgan qo'shimcha state bor.
+*/
 import { ref, onMounted } from "vue";
 import DashboardLayout from "@/layouts/DashboardLayout.vue";
 import AppCard from "@/components/AppCard.vue";
@@ -38,110 +162,141 @@ async function load() {
 }
 
 onMounted(load);
+import { computed } from 'vue'
+
+// --- animatsiya uchun state ---
+const barsGrown = ref(false)
+onMounted(() => {
+  requestAnimationFrame(() => (barsGrown.value = true))
+})
+
+// Statistik kartochkalarni bitta ro'yxatga yig'ib, stagger animatsiya uchun index beramiz
+const statCards = computed(() => [
+  { label: "Bugungi tashrif", display: stats.value.todayVisits },
+  { label: "O'rtacha xaridlar cheki", display: `${fmt(stats.value.avgCheck)} so'm` },
+  { label: 'Bugungi daromad', display: `${fmt(stats.value.todayIncome)} so'm` },
+  { label: "Eng ko'p qo'llanilgan chegirma", display: `${stats.value.topDiscount}%` },
+])
+
+// Y o'qi belgilari (grafik balandligi 200px ga mos, ekrandagi kabi 0/20/50/70/100)
+const yTicks = [100, 70, 50, 20, 0]
 </script>
 
-<template>
-  <DashboardLayout>
-    <div class="space-y-4">
-      <AppCard class="p-5">
-        <h1 class="text-xl font-bold">Asosiy</h1>
-        <p class="text-sm text-muted capitalize">Bugun, {{ today }}</p>
-      </AppCard>
+<style scoped>
+/* --- Kirish animatsiyasi (kartalar pastdan yumshoq chiqadi) --- */
+.reveal {
+  animation: reveal-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--d, 0ms);
+}
 
-      <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <AppCard class="p-4">
-          <p class="text-xs text-muted">Bugungi tashrif</p>
-          <p class="mt-1 text-2xl font-bold">{{ stats.todayVisits }}</p>
-        </AppCard>
-        <AppCard class="p-4">
-          <p class="text-xs text-muted">O'rtacha xaridlar cheki</p>
-          <p class="mt-1 text-2xl font-bold">{{ fmt(stats.avgCheck) }} so'm</p>
-        </AppCard>
-        <AppCard class="p-4">
-          <p class="text-xs text-muted">Bugungi daromad</p>
-          <p class="mt-1 text-2xl font-bold">{{ fmt(stats.todayIncome) }} so'm</p>
-        </AppCard>
-        <AppCard class="p-4">
-          <p class="text-xs text-muted">Eng ko'p qo'llanilgan chegirma</p>
-          <p class="mt-1 text-2xl font-bold">{{ stats.topDiscount }}%</p>
-        </AppCard>
-      </div>
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
 
-      <div class="grid gap-4 lg:grid-cols-3">
-        <AppCard class="p-5 lg:col-span-2">
-          <h2 class="mb-4 font-semibold">Haftalik tashriflar</h2>
-          <div class="flex h-64 items-end justify-between gap-2">
-            <div v-for="w in weekdays" :key="w.day" class="flex flex-1 flex-col items-center gap-1">
-              <div
-                class="w-full rounded-t-lg bg-primary transition-all"
-                :style="{ height: `${(w.visits / maxVisits) * 200}px` }"
-                :title="`${w.fullDay}: ${w.visits} tashrif`"
-              ></div>
-              <span class="text-xs text-muted">{{ w.day }}</span>
-            </div>
-          </div>
-        </AppCard>
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-        <AppCard class="p-5">
-          <h2 class="mb-3 flex items-center gap-2 font-semibold">🔔 Bildirishnomalar</h2>
-          <ul class="space-y-3">
-            <li v-for="n in notifications" :key="n.id" class="flex items-start justify-between gap-2 text-sm">
-              <div>
-                <p class="font-medium">{{ n.title }}</p>
-                <p class="text-xs text-muted">{{ n.description }}</p>
-              </div>
-              <span v-if="!n.read" class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-success"></span>
-            </li>
-            <li v-if="!notifications.length" class="text-sm text-muted">Bildirishnomalar yo'q</li>
-          </ul>
-          <RouterLink
-            to="/bildirishnomalar"
-            class="mt-3 flex w-full items-center justify-center rounded-full border border-border px-4 py-2 text-sm hover:bg-secondary"
-          >
-            Barchasini ko'rish ›
-          </RouterLink>
-        </AppCard>
-      </div>
+/* --- Bildirishnoma qatorlari o'ngdan chapga sirg'alib kiradi --- */
+.reveal-side {
+  animation: reveal-side 0.5s ease both;
+  animation-delay: var(--d, 0ms);
+}
 
-      <AppCard class="p-5">
-        <h2 class="mb-4 font-semibold">Oxirgi mijozlar</h2>
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b text-left text-muted">
-                <th class="pb-2 font-normal">Mijoz</th>
-                <th class="pb-2 font-normal">Xizmat</th>
-                <th class="pb-2 font-normal">Chegirma</th>
-                <th class="pb-2 font-normal">Asl narx (so'm)</th>
-                <th class="pb-2 font-normal">To'langan (so'm)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(r, i) in recent" :key="i" class="border-b last:border-none">
-                <td class="py-3">
-                  <div class="flex items-center gap-2">
-                    <span class="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
-                      {{ initials(r.name) }}
-                    </span>
-                    {{ r.name }}
-                  </div>
-                </td>
-                <td>{{ r.service }}</td>
-                <td>
-                  <span class="rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
-                    {{ r.discountPercent }}%
-                  </span>
-                </td>
-                <td class="text-muted line-through">{{ fmt(r.originalPrice) }}</td>
-                <td class="font-semibold">{{ fmt(r.finalPrice) }}</td>
-              </tr>
-              <tr v-if="!recent.length">
-                <td colspan="5" class="py-4 text-center text-muted">Hozircha ma'lumot yo'q</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </AppCard>
-    </div>
-  </DashboardLayout>
-</template>
+@keyframes reveal-side {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* --- Jadval qatorlari birin-ketin paydo bo'ladi --- */
+.reveal-row {
+  animation: reveal-row 0.45s ease both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes reveal-row {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --- O'qilmagan bildirishnoma nuqtasi uchun yumshoq puls --- */
+.animate-pulse-dot {
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.45);
+  }
+
+  50% {
+    box-shadow: 0 0 0 5px rgba(34, 197, 94, 0);
+  }
+}
+
+/* --- Qo'ng'iroq belgisi kirishda biroz tebranadi --- */
+.bell {
+  animation: bell-ring 0.7s ease 0.9s both;
+  transform-origin: top center;
+}
+
+@keyframes bell-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  20% {
+    transform: rotate(-12deg);
+  }
+
+  40% {
+    transform: rotate(10deg);
+  }
+
+  60% {
+    transform: rotate(-6deg);
+  }
+
+  80% {
+    transform: rotate(3deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* Foydalanuvchi "kamroq harakat" so'ragan bo'lsa, animatsiyalarni o'chiramiz */
+@media (prefers-reduced-motion: reduce) {
+
+  .reveal,
+  .reveal-side,
+  .reveal-row,
+  .bar,
+  .animate-pulse-dot,
+  .bell {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+</style>

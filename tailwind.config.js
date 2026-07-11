@@ -26,7 +26,16 @@ export default {
         "2xl": "1.25rem",
         "3xl": "1.5rem",
       },
+      animation: {
+        "gradient-shift": "gradient-shift 3s ease infinite",
+      },
+      keyframes: {
+        "gradient-shift": {
+          "0%, 100%": { "background-position": "0% 50%" },
+          "50%": { "background-position": "100% 50%" },
+        },
+      },
     },
+    plugins: [],
   },
-  plugins: [],
 };
