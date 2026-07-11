@@ -69,12 +69,12 @@ const ICONS = {
       <!-- Logo + toggle -->
       <div class="flex items-center gap-2 px-4 py-5" :class="collapsed ? 'justify-center px-0' : 'justify-between'">
         <div class="flex items-center gap-2 overflow-hidden">
-          <div
-            class="sidebar-pop flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
-            <img src="../images/Vector.svg" alt="S" class="h-4 w-4" />
+          <div class="sidebar-pop flex   items-center justify-center  text-primary-foreground font-bold">
+            <img src="../images/Vector.png" alt="S" class="h-6 w-6 " />
           </div>
           <Transition name="label-fade">
-            <span v-if="!collapsed" class="whitespace-nowrap text-lg font-semibold">saven</span>
+            <span v-if="!collapsed"
+              class="whitespace-nowrap text-2xl font-semibold text-[rgba(137,234,92,1)]">saven</span>
           </Transition>
         </div>
 
@@ -102,7 +102,7 @@ const ICONS = {
         :class="collapsed ? 'justify-center' : 'justify-between'" style="animation-delay: 80ms">
         <div class="flex items-center gap-2.5 overflow-hidden">
           <div
-            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
+            class="flex h-8 w-8 shrink-0 items-center z-50 justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
             {{ authStore.initials }}
           </div>
           <Transition name="label-fade">

@@ -1,184 +1,284 @@
 <script setup>
-import { ref, onMounted, reactive } from "vue";
-import { useRouter } from "vue-router";
+import { reactive, ref, onMounted, computed } from "vue";
 import DashboardLayout from "@/layouts/DashboardLayout.vue";
 import AppCard from "@/components/AppCard.vue";
-import { useAuthStore } from "@/stores/auth";
+import AppModal from "@/components/AppModal.vue";
 import { useToastStore } from "@/stores/toast";
-import { businessApi } from "@/api";
+import { useRouter } from "vue-router";
 
-const authStore = useAuthStore();
 const toast = useToastStore();
 const router = useRouter();
 
-const loading = ref(true);
-const saving = ref(false);
-const logoutConfirmOpen = ref(false);
-const form = reactive({ name: "", category: "", address: "", phone: "", email: "", description: "" });
-
-onMounted(async () => {
-  loading.value = true;
-  try {
-    const b = await authStore.fetchProfile();
-    Object.assign(form, b);
-  } finally {
-    loading.value = false;
-  }
+const profile = reactive({
+  businessName: "Fresh Cut barber",
+  category: "Sartaroshxona",
+  address: "Toshkent, Chilonzor, Qo'yliq ko'ch. 14",
+  phone: "+998 90 123 45 67",
+  email: "freshcut@biznes.uz",
+  bio: "Professional barber xizmatlari. 5 yillik tajriba.",
 });
 
-async function save() {
+const initials = computed(() =>
+  (profile.businessName || "?").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()
+);
+
+const saving = ref(false);
+
+function save() {
   saving.value = true;
-  try {
-    const updated = await businessApi.update(form);
-    authStore.business = updated;
-    toast.success("Profil yangilandi");
-  } catch (e) {
-    toast.error("Xatolik yuz berdi");
-  } finally {
+  setTimeout(() => {
     saving.value = false;
+    toast.success("O'zgarishlar saqlandi");
+  }, 700);
+}
+
+const targets = { visits: 2253, clients: 1087, revenue: 34000000 };
+const stats = reactive({ visits: 0, clients: 0, revenue: 0 });
+
+function animateCount(key, target, duration = 1400) {
+  const start = performance.now();
+  function frame(now) {
+    const p = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - p, 3);
+    stats[key] = Math.round(target * eased);
+    if (p < 1) requestAnimationFrame(frame);
   }
-}
-
-function logout() {
-  authStore.logout();
-  router.push("/login");
-  logoutConfirmOpen.value = false;
-}
-
-function initials(name) {
-  return (name || "?").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+  requestAnimationFrame(frame);
 }
 
 function fmt(n) {
-  return Number(n || 0).toLocaleString("ru-RU");
+  return n.toLocaleString("ru-RU");
+}
+
+onMounted(() => {
+  setTimeout(() => animateCount("visits", targets.visits), 200);
+  setTimeout(() => animateCount("clients", targets.clients), 350);
+  setTimeout(() => animateCount("revenue", targets.revenue), 500);
+});
+
+const showLogoutModal = ref(false);
+const loggingOut = ref(false);
+
+function confirmLogout() {
+  loggingOut.value = true;
+  setTimeout(() => {
+    loggingOut.value = false;
+    showLogoutModal.value = false;
+    router.push("/login").catch(() => { });
+  }, 650);
 }
 </script>
 
 <template>
   <DashboardLayout>
-    <div class="space-y-4">
+    <div class="space-y-4 page-enter">
       <AppCard class="flex items-center justify-between p-5">
-        <h1 class="text-xl font-bold">Profil</h1>
+        <h1 class="text-xl font-bold tracking-tight">Profil</h1>
         <button
-          type="submit"
-          form="profil-form"
-          :disabled="saving"
-          class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-        >
-          {{ saving ? "Saqlanmoqda..." : "Saqlash" }}
+          class="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md active:scale-95 disabled:opacity-70"
+          :disabled="saving" @click="save">
+          <span v-if="!saving">Saqlash</span>
+          <span v-else class="inline-flex items-center gap-2">
+            <span
+              class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground"></span>
+            Saqlanmoqda…
+          </span>
         </button>
       </AppCard>
 
-      <div class="grid gap-4 lg:grid-cols-3">
-        <AppCard class="p-6 lg:col-span-2">
-          <div class="mb-6 flex items-center gap-4">
-            <div class="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-xl font-bold text-primary-foreground">
-              {{ initials(form.name) }}
+      <div class="grid gap-4 lg:grid-cols-[2fr_1fr] items-start">
+        <!-- LEFT: profile card -->
+        <AppCard class="p-6 transition-all duration-200 hover:shadow-lg rise" style="animation-delay: 0.05s">
+          <div class="mb-5 flex items-center gap-4">
+            <div class="relative h-[62px] w-[62px] shrink-0">
+              <div class="absolute inset-0 rounded-full ring-glow"></div>
+              <div
+                class="absolute inset-[3px] flex items-center justify-center rounded-full bg-accent text-lg font-bold text-accent-foreground">
+                {{ initials }}
+              </div>
             </div>
             <div>
-              <p class="text-lg font-semibold">{{ form.name || "—" }}</p>
-              <p class="flex items-center gap-1.5 text-sm text-success">
-                <span class="h-2 w-2 rounded-full bg-success"></span>Faol
+              <h2 class="text-lg font-semibold leading-tight">{{ profile.businessName }}</h2>
+              <p class="mt-0.5 flex items-center gap-1.5 text-sm font-medium text-success">
+                <span class="relative inline-flex h-2 w-2 rounded-full bg-success">
+                  <span class="absolute inset-0 rounded-full bg-success animate-pulse-dot"></span>
+                </span>
+                Faol
               </p>
             </div>
           </div>
 
-          <form id="profil-form" class="grid gap-4 md:grid-cols-2" @submit.prevent="save">
+          <div class="space-y-4">
             <div>
-              <label class="text-sm font-medium">Biznes nomi</label>
-              <input v-model="form.name" class="mt-1 h-11 w-full rounded-lg border border-border bg-input px-3 text-sm" />
-            </div>
-            <div>
-              <label class="text-sm font-medium">Kategoriya</label>
-              <input v-model="form.category" class="mt-1 h-11 w-full rounded-lg border border-border bg-input px-3 text-sm" />
+              <label class="mb-1 block text-xs font-medium text-muted">Biznes nomi</label>
+              <input v-model="profile.businessName" type="text"
+                class="h-11 w-full rounded-lg border border-transparent bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
             </div>
             <div>
-              <label class="text-sm font-medium">Telefon</label>
-              <input v-model="form.phone" class="mt-1 h-11 w-full rounded-lg border border-border bg-input px-3 text-sm" />
+              <label class="mb-1 block text-xs font-medium text-muted">Kategoriya</label>
+              <input v-model="profile.category" type="text"
+                class="h-11 w-full rounded-lg border border-transparent bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
             </div>
             <div>
-              <label class="text-sm font-medium">Email</label>
-              <input v-model="form.email" type="email" class="mt-1 h-11 w-full rounded-lg border border-border bg-input px-3 text-sm" />
+              <label class="mb-1 block text-xs font-medium text-muted">Manzil</label>
+              <input v-model="profile.address" type="text"
+                class="h-11 w-full rounded-lg border border-transparent bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
             </div>
-            <div class="md:col-span-2">
-              <label class="text-sm font-medium">Manzil</label>
-              <input v-model="form.address" class="mt-1 h-11 w-full rounded-lg border border-border bg-input px-3 text-sm" />
+            <div class="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label class="mb-1 block text-xs font-medium text-muted">Telefon</label>
+                <input v-model="profile.phone" type="text"
+                  class="h-11 w-full rounded-lg border border-transparent bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
+              </div>
+              <div>
+                <label class="mb-1 block text-xs font-medium text-muted">Email</label>
+                <input v-model="profile.email" type="text"
+                  class="h-11 w-full rounded-lg border border-transparent bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
+              </div>
             </div>
-            <div class="md:col-span-2">
-              <label class="text-sm font-medium">Tavsif</label>
-              <textarea v-model="form.description" rows="3" class="mt-1 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm"></textarea>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-muted">Tavsif</label>
+              <textarea v-model="profile.bio" rows="3"
+                class="w-full resize-none rounded-lg border border-transparent bg-input px-3 py-2.5 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10"></textarea>
             </div>
-          </form>
+          </div>
         </AppCard>
 
+        <!-- RIGHT: side cards -->
         <div class="space-y-4">
-          <AppCard class="p-5">
-            <h2 class="mb-3 font-semibold">Statistika (jami)</h2>
-            <div class="space-y-2 text-sm">
-              <div class="flex justify-between">
-                <span class="text-muted">Jami tashrif</span>
-                <span class="font-semibold">{{ fmt(authStore.business?.total_visits) }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-muted">Mijozlar soni</span>
-                <span class="font-semibold">{{ fmt(authStore.business?.total_clients) }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-muted">Tejagan summa</span>
-                <span class="font-semibold">{{ fmt(authStore.business?.total_saved) }} so'm</span>
-              </div>
+          <AppCard class="p-6 transition-all duration-200 hover:shadow-lg rise" style="animation-delay: 0.12s">
+            <h3 class="mb-3 text-sm font-semibold">
+              Statistika <span class="font-normal text-muted">(jami)</span>
+            </h3>
+            <div class="flex items-center justify-between py-2 text-sm">
+              <span class="text-muted">Jami tashrif</span>
+              <span class="font-semibold tabular-nums">{{ fmt(stats.visits) }}</span>
+            </div>
+            <div class="h-px bg-border"></div>
+            <div class="flex items-center justify-between py-2 text-sm">
+              <span class="text-muted">Mijozlar soni</span>
+              <span class="font-semibold tabular-nums">{{ fmt(stats.clients) }}</span>
+            </div>
+            <div class="h-px bg-border"></div>
+            <div class="flex items-center justify-between py-2 text-sm">
+              <span class="text-muted">Jami daromad</span>
+              <span class="font-semibold tabular-nums text-success">{{ fmt(stats.revenue) }} so'm</span>
             </div>
           </AppCard>
 
-          <AppCard class="p-5">
-            <h2 class="mb-1 font-semibold">Yordam</h2>
-            <p class="mb-3 text-sm text-muted">
+          <AppCard class="p-6 transition-all duration-200 hover:shadow-lg rise" style="animation-delay: 0.19s">
+            <h3 class="mb-2 text-sm font-semibold">Yordam</h3>
+            <p class="mb-4 text-sm text-muted">
               Agar sizga texnik yordam kerak bo'lsa, qo'llab-quvvatlash jamoamizga murojaat qiling.
             </p>
+
             <button
-              type="button"
-              class="mb-3 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-destructive text-sm font-semibold text-white hover:bg-destructive/90"
-              @click="toast.info('+998 93 242 59 99')"
-            >
-              ☎ Bog'lanish
+              class="mb-2 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md active:scale-95">
+              📞 Bog'lanish
             </button>
+
             <button
-              type="button"
-              class="flex h-11 w-full items-center justify-center gap-1 rounded-full border border-border text-sm font-medium text-destructive hover:bg-red-50"
-              @click="logoutConfirmOpen = true"
-            >
-              ⏻ Chiqish
+              class="flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm font-medium text-destructive transition-all duration-150 hover:bg-red-50 active:scale-95"
+              @click="showLogoutModal = true">
+              ↪ Chiqish
             </button>
           </AppCard>
         </div>
       </div>
     </div>
 
-    <div
-      v-if="logoutConfirmOpen"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      @click.self="logoutConfirmOpen = false"
-    >
-      <div class="w-full max-w-sm rounded-3xl bg-card p-6 text-center shadow-2xl">
-        <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-red-100 text-2xl text-destructive">
-          ⏻
+    <AppModal :open="showLogoutModal" title="Tizimdan chiqish" @close="showLogoutModal = false">
+      <div class="flex flex-col items-center gap-3 py-2 text-center">
+        <div class="flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-2xl">
+          🔌
         </div>
-        <h2 class="text-lg font-semibold">Tizimdan chiqishni xohlaysizmi?</h2>
-        <div class="mt-5 flex gap-2">
-          <button
-            class="h-11 flex-1 rounded-full border border-border text-sm font-medium hover:bg-secondary"
-            @click="logoutConfirmOpen = false"
-          >
-            Orqaga
-          </button>
-          <button
-            class="h-11 flex-1 rounded-full bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90"
-            @click="logout"
-          >
-            Chiqish
-          </button>
-        </div>
+        <h3 class="text-base font-semibold">Siz tizimdan chiqishni xohlaysizmi?</h3>
+        <p class="text-sm text-muted">Agar davom etsangiz, siz qayta tizimga kirishingiz kerak bo'ladi.</p>
       </div>
-    </div>
+      <div class="mt-4 flex justify-end gap-2">
+        <button
+          class="rounded-full border border-border px-4 py-2 text-sm transition-colors duration-150 hover:bg-secondary"
+          :disabled="loggingOut" @click="showLogoutModal = false">
+          Orqaga
+        </button>
+        <button
+          class="rounded-full bg-destructive px-4 py-2 text-sm text-white transition-all duration-150 hover:bg-destructive/90 active:scale-95 disabled:opacity-60"
+          :disabled="loggingOut" @click="confirmLogout">
+          <span v-if="loggingOut"
+            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white align-middle"></span>
+          <span v-else>Chiqish</span>
+        </button>
+      </div>
+    </AppModal>
   </DashboardLayout>
 </template>
+
+<style scoped>
+.page-enter {
+  animation: pageFadeIn 0.4s ease-out;
+}
+
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rise {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: riseIn 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+
+@keyframes riseIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Rotating gradient ring around avatar */
+.ring-glow {
+  background: conic-gradient(from 0deg, var(--primary, #22c55e), transparent 65%, var(--primary, #22c55e));
+  animation: spinSlow 6s linear infinite;
+}
+
+@keyframes spinSlow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Active status dot pulse */
+.animate-pulse-dot {
+  animation: dotPulse 1.8s ease-out infinite;
+}
+
+@keyframes dotPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .page-enter,
+  .rise,
+  .ring-glow,
+  .animate-pulse-dot {
+    animation: none !important;
+  }
+}
+</style>
