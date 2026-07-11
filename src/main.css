@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-gray-900 antialiased;
+  }
+}
+
+.login-bg {
+  background: linear-gradient(160deg, #eaffe0 0%, #cdf5b0 35%, #8ee668 65%, #4fb930 100%);
+}
