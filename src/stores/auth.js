@@ -7,7 +7,8 @@ export const useAuthStore = defineStore("auth", {
   }),
   getters: {
     isAuthenticated: () => authApi.isAuthenticated(),
-    initials: (state) => (state.business?.name ? state.business.name.charAt(0).toUpperCase() : "S"),
+    initials: (state) =>
+      state.business?.name ? state.business.name.charAt(0).toUpperCase() : "S",
   },
   actions: {
     async login(login, password) {
