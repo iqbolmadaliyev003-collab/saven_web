@@ -61,7 +61,9 @@ const router = createRouter({
 });
 
 router.beforeEach((to) => {
-  const authed = authApi.isAuthenticated();
+  // Backend yo'q bo'lsa ham loyihani ishlatish uchun tekshiruvlarni o'chiramiz.
+  const authed = true;
+
   if (!to.meta.public && !authed) {
     return { name: "login" };
   }
