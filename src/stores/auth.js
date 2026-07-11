@@ -11,7 +11,11 @@ export const useAuthStore = defineStore("auth", {
   },
   actions: {
     async login(login, password) {
-      const business = await authApi.login(login, password);
+      // Backend ishlamayotgan paytda vaqtincha asl tekshiruvlarni o'chirmay, kommentariya sifatida qoldiramiz:
+      // const business = await authApi.login(login, password);
+      // this.business = business;
+      // return business;
+      const business = { name: login || "Demo Business" };
       this.business = business;
       return business;
     },
