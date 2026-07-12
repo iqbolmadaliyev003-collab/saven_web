@@ -74,7 +74,7 @@ const ICONS = {
           </div>
           <Transition name="label-fade">
             <span v-if="!collapsed"
-              class="whitespace-nowrap text-2xl font-semibold text-[rgba(137,234,92,1)]">saven</span>
+              class="whitespace-nowrap text-2xl font-semibold text-[rgba(137,234,92,1)]">savin</span>
           </Transition>
         </div>
 
@@ -160,7 +160,7 @@ const ICONS = {
 
     <!-- Mobile top bar -->
     <div class="fixed inset-x-0 top-0 z-30 flex items-center justify-between bg-sidebar px-4 py-3 text-white md:hidden">
-      <span class="text-lg font-semibold">saven</span>
+      <span class="text-lg font-semibold">savin</span>
       <RouterLink to="/profil"
         class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
         {{ authStore.initials }}

@@ -2,7 +2,8 @@
 import { ref, computed, onMounted, watch, nextTick } from "vue";
 import DashboardLayout from "@/layouts/DashboardLayout.vue";
 import AppCard from "@/components/AppCard.vue";
-import { statistikaApi } from "@/api";
+import { historyApi } from "@/api";
+import { groupByDay, topCashiers, topClients, summarize } from "@/utils/stats";
 
 function fmt(n) {
   return Number(n || 0).toLocaleString("ru-RU");
@@ -11,6 +12,10 @@ function initials(name) {
   return (name || "?").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
 }
 
+// MUHIM: backend'da alohida "statistika" endpointi umumiy jami/kunlik/top
+// ma'lumotlarni bermaydi (faqat davr bo'yicha yig'indi qaytaradi). Shuning uchun
+// tanlangan davrdagi to'liq chegirma tarixini yuklab, kerakli ko'rsatkichlarni
+// shu yerda hisoblaymiz.
 const ranges = [
   { label: "Hafta", days: 7 },
   { label: "Oy", days: 30 },
@@ -19,31 +24,40 @@ const ranges = [
 const range = ref(ranges[0]);
 const rangeIndex = computed(() => ranges.findIndex((r) => r.label === range.value.label));
 
-const totals = ref({ totalVisits: 0, avgCheck: 0, totalIncome: 0, discountsGiven: 0, weekdayVisits: [] });
-const topServices = ref([]);
+const totals = ref({ totalVisits: 0, avgCheck: 0, totalIncome: 0, discountsGiven: 0 });
+const weekdayVisits = ref([]);
+const topServices = ref([]); // amalda: top kassirlar
 const activeClients = ref([]);
 
-const maxVisits = computed(() =>
-  Math.max(1, ...((totals.value.weekdayVisits || []).map((x) => x.visits)))
-);
+const maxVisits = computed(() => Math.max(1, ...weekdayVisits.value.map((x) => x.visits)));
 const yTicks = computed(() => {
   const top = Math.ceil(maxVisits.value / 20) * 20 || 100;
   return [top, Math.round(top * 0.7), Math.round(top * 0.5), Math.round(top * 0.2), 0];
 });
 
-// --- animatsiya holati ---
 const barsGrown = ref(false);
 const fillsGrown = ref(false);
 const hoveredDay = ref(null);
 const loaded = ref(false);
 
 async function load() {
+  loaded.value = false;
   barsGrown.value = false;
   fillsGrown.value = false;
-  const data = await statistikaApi.summary(range.value.days);
-  totals.value = data;
-  topServices.value = data.topServices || [];
-  activeClients.value = data.activeClients || [];
+
+  const since = new Date();
+  since.setDate(since.getDate() - (range.value.days - 1));
+  const dateFrom = since.toISOString().slice(0, 10);
+
+  const rows = await historyApi.list({ date_from: dateFrom, ordering: "-used_at" });
+
+  totals.value = summarize(rows);
+  // Grafik doim oxirgi 7 kunlik kesimni ko'rsatadi (uzun davrlarda kunlik
+  // taqsimot ma'noli bo'lmay qoladi).
+  weekdayVisits.value = groupByDay(rows, 7);
+  topServices.value = topCashiers(rows, 5);
+  activeClients.value = topClients(rows, 5);
+
   loaded.value = true;
   await nextTick();
   requestAnimationFrame(() => {
@@ -95,16 +109,16 @@ watch(range, load);
         </AppCard>
         <AppCard class="reveal p-4 transition-transform duration-300 hover:-translate-y-1 hover:shadow-md"
           style="--d: 260ms">
-          <p class="text-xs text-muted">Berilgan chegirma</p>
-          <p class="mt-1 text-2xl font-bold tabular-nums">{{ totals.discountsGiven }} ta</p>
+          <p class="text-xs text-muted">Berilgan chegirma summasi</p>
+          <p class="mt-1 text-2xl font-bold tabular-nums">{{ fmt(totals.discountsGiven) }} so'm</p>
         </AppCard>
       </div>
 
       <div class="grid gap-4 lg:grid-cols-3">
         <AppCard class="reveal p-5 lg:col-span-2" style="--d: 340ms">
-          <h2 class="mb-4 font-semibold">Haftalik tashriflar</h2>
+          <h2 class="mb-4 font-semibold">Oxirgi 7 kunlik tashriflar</h2>
 
-          <div v-if="totals.weekdayVisits?.length" class="flex h-64 gap-3">
+          <div v-if="weekdayVisits.length" class="flex h-64 gap-3">
             <div class="flex flex-col justify-between py-0.5 text-xs text-muted">
               <span v-for="t in yTicks" :key="t">{{ t }}</span>
             </div>
@@ -114,10 +128,9 @@ watch(range, load);
                 <span v-for="t in yTicks" :key="'g' + t" class="border-t border-dashed border-border/60"></span>
               </div>
 
-              <div v-for="(w, i) in totals.weekdayVisits" :key="w.day"
+              <div v-for="(w, i) in weekdayVisits" :key="w.day"
                 class="relative z-10 flex flex-1 flex-col items-center gap-1" @mouseenter="hoveredDay = i"
                 @mouseleave="hoveredDay = null">
-                <!-- moslashuvchan tooltip -->
                 <Transition name="tip">
                   <div v-if="hoveredDay === i"
                     class="absolute bottom-full z-20 mb-2 whitespace-nowrap rounded-lg bg-[#1c1c1c] px-3 py-2 text-white shadow-lg">
@@ -143,7 +156,7 @@ watch(range, load);
         </AppCard>
 
         <AppCard class="reveal p-5" style="--d: 420ms">
-          <h2 class="mb-4 font-semibold">Top xizmatlar</h2>
+          <h2 class="mb-4 font-semibold">Top kassirlar</h2>
           <ul class="space-y-3">
             <li v-for="(s, i) in topServices" :key="s.name" class="reveal-side group"
               :style="{ '--d': `${560 + i * 90}ms` }">
@@ -256,7 +269,6 @@ watch(range, load);
   }
 }
 
-/* Tooltip paydo bo'lishi */
 .tip-enter-active,
 .tip-leave-active {
   transition: opacity 0.15s ease, transform 0.15s ease;

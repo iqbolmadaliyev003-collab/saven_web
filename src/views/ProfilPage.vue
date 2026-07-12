@@ -5,67 +5,92 @@ import AppCard from "@/components/AppCard.vue";
 import AppModal from "@/components/AppModal.vue";
 import { useToastStore } from "@/stores/toast";
 import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
+import { businessApi, dashboardApi } from "@/api";
 
 const toast = useToastStore();
 const router = useRouter();
+const authStore = useAuthStore();
 
+const loading = ref(true);
+
+// Backend BusinessSerializer maydonlari: name, description, phone_number, email,
+// full_address (category, logo, website va h.k. ham bor, lekin bu forma
+// asosiylarini tahrirlaydi).
 const profile = reactive({
-  businessName: "Fresh Cut barber",
-  category: "Sartaroshxona",
-  address: "Toshkent, Chilonzor, Qo'yliq ko'ch. 14",
-  phone: "+998 90 123 45 67",
-  email: "freshcut@biznes.uz",
-  bio: "Professional barber xizmatlari. 5 yillik tajriba.",
+  name: "",
+  description: "",
+  full_address: "",
+  phone_number: "",
+  email: "",
 });
+const categoryName = ref("");
+const cashiersCount = ref(0);
 
 const initials = computed(() =>
-  (profile.businessName || "?").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()
+  (profile.name || "?").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()
 );
 
 const saving = ref(false);
 
-function save() {
-  saving.value = true;
-  setTimeout(() => {
-    saving.value = false;
-    toast.success("O'zgarishlar saqlandi");
-  }, 700);
-}
-
-const targets = { visits: 2253, clients: 1087, revenue: 34000000 };
-const stats = reactive({ visits: 0, clients: 0, revenue: 0 });
-
-function animateCount(key, target, duration = 1400) {
-  const start = performance.now();
-  function frame(now) {
-    const p = Math.min((now - start) / duration, 1);
-    const eased = 1 - Math.pow(1 - p, 3);
-    stats[key] = Math.round(target * eased);
-    if (p < 1) requestAnimationFrame(frame);
+async function load() {
+  loading.value = true;
+  try {
+    const [business, dash] = await Promise.all([businessApi.me(), dashboardApi.stats()]);
+    profile.name = business.name || "";
+    profile.description = business.description || "";
+    profile.full_address = business.full_address || "";
+    profile.phone_number = business.phone_number || "";
+    profile.email = business.email || "";
+    categoryName.value = business.category?.name || "—";
+    cashiersCount.value = business.cashiers_count ?? 0;
+    stats.customers = dash.total_customers ?? 0;
+    stats.todayRevenue = dash.today_revenue ?? 0;
+    stats.activePercent = dash.active_discount_percent ?? 0;
+  } catch (e) {
+    toast.error("Ma'lumotni yuklashda xatolik");
+  } finally {
+    loading.value = false;
   }
-  requestAnimationFrame(frame);
 }
+onMounted(load);
+
+const stats = reactive({ customers: 0, todayRevenue: 0, activePercent: 0 });
 
 function fmt(n) {
-  return n.toLocaleString("ru-RU");
+  return Number(n || 0).toLocaleString("ru-RU");
 }
 
-onMounted(() => {
-  setTimeout(() => animateCount("visits", targets.visits), 200);
-  setTimeout(() => animateCount("clients", targets.clients), 350);
-  setTimeout(() => animateCount("revenue", targets.revenue), 500);
-});
+async function save() {
+  saving.value = true;
+  try {
+    await businessApi.update({
+      name: profile.name,
+      description: profile.description,
+      full_address: profile.full_address,
+      phone_number: profile.phone_number,
+      email: profile.email,
+    });
+    authStore.business = { ...authStore.business, name: profile.name };
+    toast.success("O'zgarishlar saqlandi");
+  } catch (e) {
+    toast.error("Saqlashda xatolik yuz berdi");
+  } finally {
+    saving.value = false;
+  }
+}
 
 const showLogoutModal = ref(false);
 const loggingOut = ref(false);
 
 function confirmLogout() {
   loggingOut.value = true;
+  authStore.logout();
   setTimeout(() => {
     loggingOut.value = false;
     showLogoutModal.value = false;
     router.push("/login").catch(() => { });
-  }, 650);
+  }, 300);
 }
 </script>
 
@@ -76,7 +101,7 @@ function confirmLogout() {
         <h1 class="text-xl font-bold tracking-tight">Profil</h1>
         <button
           class="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md active:scale-95 disabled:opacity-70"
-          :disabled="saving" @click="save">
+          :disabled="saving || loading" @click="save">
           <span v-if="!saving">Saqlash</span>
           <span v-else class="inline-flex items-center gap-2">
             <span
@@ -98,7 +123,7 @@ function confirmLogout() {
               </div>
             </div>
             <div>
-              <h2 class="text-lg font-semibold leading-tight">{{ profile.businessName }}</h2>
+              <h2 class="text-lg font-semibold leading-tight">{{ profile.name || "—" }}</h2>
               <p class="mt-0.5 flex items-center gap-1.5 text-sm font-medium text-success">
                 <span class="relative inline-flex h-2 w-2 rounded-full bg-success">
                   <span class="absolute inset-0 rounded-full bg-success animate-pulse-dot"></span>
@@ -111,34 +136,34 @@ function confirmLogout() {
           <div class="space-y-4">
             <div>
               <label class="mb-1 block text-xs font-medium text-muted">Biznes nomi</label>
-              <input v-model="profile.businessName" type="text"
+              <input v-model="profile.name" type="text" :disabled="loading"
                 class="h-11 w-full rounded-lg border border-transparent bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
             </div>
             <div>
               <label class="mb-1 block text-xs font-medium text-muted">Kategoriya</label>
-              <input v-model="profile.category" type="text"
-                class="h-11 w-full rounded-lg border border-transparent bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
+              <input :value="categoryName" type="text" disabled
+                class="h-11 w-full cursor-not-allowed rounded-lg border border-transparent bg-input px-3 text-sm text-muted outline-none" />
             </div>
             <div>
               <label class="mb-1 block text-xs font-medium text-muted">Manzil</label>
-              <input v-model="profile.address" type="text"
+              <input v-model="profile.full_address" type="text" :disabled="loading"
                 class="h-11 w-full rounded-lg border border-transparent bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
             </div>
             <div class="grid gap-4 sm:grid-cols-2">
               <div>
                 <label class="mb-1 block text-xs font-medium text-muted">Telefon</label>
-                <input v-model="profile.phone" type="text"
+                <input v-model="profile.phone_number" type="text" :disabled="loading"
                   class="h-11 w-full rounded-lg border border-transparent bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
               </div>
               <div>
                 <label class="mb-1 block text-xs font-medium text-muted">Email</label>
-                <input v-model="profile.email" type="text"
+                <input v-model="profile.email" type="text" :disabled="loading"
                   class="h-11 w-full rounded-lg border border-transparent bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
               </div>
             </div>
             <div>
               <label class="mb-1 block text-xs font-medium text-muted">Tavsif</label>
-              <textarea v-model="profile.bio" rows="3"
+              <textarea v-model="profile.description" rows="3" :disabled="loading"
                 class="w-full resize-none rounded-lg border border-transparent bg-input px-3 py-2.5 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10"></textarea>
             </div>
           </div>
@@ -147,22 +172,25 @@ function confirmLogout() {
         <!-- RIGHT: side cards -->
         <div class="space-y-4">
           <AppCard class="p-6 transition-all duration-200 hover:shadow-lg rise" style="animation-delay: 0.12s">
-            <h3 class="mb-3 text-sm font-semibold">
-              Statistika <span class="font-normal text-muted">(jami)</span>
-            </h3>
+            <h3 class="mb-3 text-sm font-semibold">Statistika</h3>
             <div class="flex items-center justify-between py-2 text-sm">
-              <span class="text-muted">Jami tashrif</span>
-              <span class="font-semibold tabular-nums">{{ fmt(stats.visits) }}</span>
+              <span class="text-muted">Mijozlar soni (jami)</span>
+              <span class="font-semibold tabular-nums">{{ fmt(stats.customers) }}</span>
             </div>
             <div class="h-px bg-border"></div>
             <div class="flex items-center justify-between py-2 text-sm">
-              <span class="text-muted">Mijozlar soni</span>
-              <span class="font-semibold tabular-nums">{{ fmt(stats.clients) }}</span>
+              <span class="text-muted">Kassirlar soni</span>
+              <span class="font-semibold tabular-nums">{{ fmt(cashiersCount) }}</span>
             </div>
             <div class="h-px bg-border"></div>
             <div class="flex items-center justify-between py-2 text-sm">
-              <span class="text-muted">Jami daromad</span>
-              <span class="font-semibold tabular-nums text-success">{{ fmt(stats.revenue) }} so'm</span>
+              <span class="text-muted">Bugungi daromad</span>
+              <span class="font-semibold tabular-nums text-success">{{ fmt(stats.todayRevenue) }} so'm</span>
+            </div>
+            <div class="h-px bg-border"></div>
+            <div class="flex items-center justify-between py-2 text-sm">
+              <span class="text-muted">Joriy chegirma foizi</span>
+              <span class="font-semibold tabular-nums">{{ stats.activePercent }}%</span>
             </div>
           </AppCard>
 
@@ -243,7 +271,6 @@ function confirmLogout() {
   }
 }
 
-/* Rotating gradient ring around avatar */
 .ring-glow {
   background: conic-gradient(from 0deg, var(--primary, #22c55e), transparent 65%, var(--primary, #22c55e));
   animation: spinSlow 6s linear infinite;
@@ -255,7 +282,6 @@ function confirmLogout() {
   }
 }
 
-/* Active status dot pulse */
 .animate-pulse-dot {
   animation: dotPulse 1.8s ease-out infinite;
 }

@@ -19,7 +19,7 @@ async function handleSubmit() {
   errorMessage.value = ""; // eski xatoni tozalash
   loading.value = true;
   try {
-    // await authStore.login(login.value, password.value);
+    await authStore.login(login.value, password.value);
     router.push("/asosiy");
   } catch (e) {
     errorMessage.value = "Email yoki parol noto'g'ri. Iltimos qayta tekshiring.";
@@ -45,7 +45,7 @@ function copyPhone() {
       </div>
 
       <h1 class="text-3xl font-bold leading-tight text-gray-900">
-        Saven Biznes<br />paneli
+        Savin Biznes<br />paneli
       </h1>
 
       <!-- Xato banneri -->
@@ -62,7 +62,7 @@ function copyPhone() {
 
       <form class="mt-6 space-y-4" @submit.prevent="handleSubmit">
         <div class="space-y-1.5">
-          <label for="login" class="text-sm font-medium text-gray-800">Login</label>
+          <label for="login" class="text-sm font-medium text-gray-800">Email</label>
           <input id="login" v-model="login" placeholder="example@biznes.uz" :class="[
             'h-11 w-full rounded-lg border px-3 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2',
             errorMessage

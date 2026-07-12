@@ -19,7 +19,7 @@
 
       <div class="grid gap-4 lg:grid-cols-3">
         <AppCard class="reveal p-5 lg:col-span-2" style="--d: 400ms">
-          <h2 class="mb-4 font-semibold">Haftalik tashriflar</h2>
+          <h2 class="mb-4 font-semibold">Oxirgi 7 kunlik tashriflar</h2>
           <div class="flex h-64 gap-3">
             <!-- y-axis -->
             <div class="flex flex-col justify-between py-0.5 text-xs text-muted">
@@ -56,10 +56,10 @@
               :style="{ '--d': `${600 + i * 90}ms` }">
               <div>
                 <p class="font-medium">{{ n.title }}</p>
-                <p class="text-xs text-muted">{{ n.description }}</p>
+                <p class="text-xs text-muted">{{ n.body }}</p>
               </div>
-              <span v-if="!n.read" class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-success"
-                :class="{ 'animate-pulse-dot': !n.read }"></span>
+              <span v-if="!n.is_read" class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-success"
+                :class="{ 'animate-pulse-dot': !n.is_read }"></span>
             </li>
             <li v-if="!notifications.length" class="text-sm text-muted">Bildirishnomalar yo'q</li>
           </ul>
@@ -77,33 +77,33 @@
             <thead>
               <tr class="border-b text-left text-muted">
                 <th class="pb-2 font-normal">Mijoz</th>
-                <th class="pb-2 font-normal">Xizmat</th>
+                <th class="pb-2 font-normal">Kassir</th>
                 <th class="pb-2 font-normal">Chegirma</th>
                 <th class="pb-2 font-normal">Asl narx (so'm)</th>
                 <th class="pb-2 font-normal">To'langan (so'm)</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(r, i) in recent" :key="i"
+              <tr v-for="(r, i) in recent" :key="r.id"
                 class="reveal-row border-b transition-colors last:border-none hover:bg-secondary/60"
                 :style="{ '--d': `${640 + i * 60}ms` }">
                 <td class="py-3">
                   <div class="flex items-center gap-2">
                     <span
                       class="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
-                      {{ initials(r.name) }}
+                      {{ initials(r.customer_email) }}
                     </span>
-                    {{ r.name }}
+                    {{ r.customer_email || "—" }}
                   </div>
                 </td>
-                <td>{{ r.service }}</td>
+                <td>{{ r.cashier_name || "—" }}</td>
                 <td>
                   <span class="rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
-                    {{ r.discountPercent }}%
+                    {{ r.applied_percent }}%
                   </span>
                 </td>
-                <td class="text-muted line-through">{{ fmt(r.originalPrice) }}</td>
-                <td class="font-semibold">{{ fmt(r.finalPrice) }}</td>
+                <td class="text-muted line-through">{{ fmt(r.purchase_amount) }}</td>
+                <td class="font-semibold">{{ fmt(r.purchase_amount - r.discount_amount) }}</td>
               </tr>
               <tr v-if="!recent.length">
                 <td colspan="5" class="py-4 text-center text-muted">Hozircha ma'lumot yo'q</td>
@@ -117,24 +117,26 @@
 </template>
 
 <script setup>
-/*
-  Bu qismda mavjud logikangiz (props/composables) saqlanadi:
-  today, stats, weekdays, maxVisits, notifications, recent, fmt, initials
-  — ular allaqachon loyihangizda mavjud deb faraz qilindi.
-  Quyida faqat animatsiya uchun zarur bo'lgan qo'shimcha state bor.
-*/
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import DashboardLayout from "@/layouts/DashboardLayout.vue";
 import AppCard from "@/components/AppCard.vue";
 import { RouterLink } from "vue-router";
-import { dashboardApi, notificationsApi } from "@/api";
+import { dashboardApi, notificationsApi, historyApi } from "@/api";
+import { groupByDay, recentEntries } from "@/utils/stats";
 
 function fmt(n) {
   return Number(n || 0).toLocaleString("ru-RU");
 }
 
 const loading = ref(true);
-const stats = ref({ todayVisits: 0, avgCheck: 0, todayIncome: 0, topDiscount: 0 });
+// Backend: BusinessDashboardSerializer -> today_customers, today_discount_amount,
+// today_revenue, total_customers, active_discount_percent
+const dashStats = ref({
+  today_customers: 0,
+  today_discount_amount: 0,
+  today_revenue: 0,
+  active_discount_percent: 0,
+});
 const weekdays = ref([]);
 const recent = ref([]);
 const notifications = ref([]);
@@ -150,10 +152,19 @@ const maxVisits = ref(1);
 async function load() {
   loading.value = true;
   try {
-    const [dash, notifs] = await Promise.all([dashboardApi.stats(), notificationsApi.list()]);
-    stats.value = dash;
-    weekdays.value = dash.weekdayVisits || [];
-    recent.value = dash.recentClients || [];
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 6);
+    const dateFrom = weekAgo.toISOString().slice(0, 10);
+
+    const [dash, notifs, history] = await Promise.all([
+      dashboardApi.stats(),
+      notificationsApi.list(),
+      historyApi.list({ date_from: dateFrom, ordering: "-used_at" }),
+    ]);
+
+    dashStats.value = dash;
+    weekdays.value = groupByDay(history, 7);
+    recent.value = recentEntries(history, 6);
     notifications.value = notifs.slice(0, 4);
     maxVisits.value = Math.max(1, ...weekdays.value.map((w) => w.visits));
   } finally {
@@ -162,24 +173,20 @@ async function load() {
 }
 
 onMounted(load);
-import { computed } from 'vue'
 
-// --- animatsiya uchun state ---
-const barsGrown = ref(false)
+const barsGrown = ref(false);
 onMounted(() => {
-  requestAnimationFrame(() => (barsGrown.value = true))
-})
+  requestAnimationFrame(() => (barsGrown.value = true));
+});
 
-// Statistik kartochkalarni bitta ro'yxatga yig'ib, stagger animatsiya uchun index beramiz
 const statCards = computed(() => [
-  { label: "Bugungi tashrif", display: stats.value.todayVisits },
-  { label: "O'rtacha xaridlar cheki", display: `${fmt(stats.value.avgCheck)} so'm` },
-  { label: 'Bugungi daromad', display: `${fmt(stats.value.todayIncome)} so'm` },
-  { label: "Eng ko'p qo'llanilgan chegirma", display: `${stats.value.topDiscount}%` },
-])
+  { label: "Bugungi mijozlar", display: dashStats.value.today_customers },
+  { label: "Bugungi chegirma summasi", display: `${fmt(dashStats.value.today_discount_amount)} so'm` },
+  { label: "Bugungi daromad", display: `${fmt(dashStats.value.today_revenue)} so'm` },
+  { label: "Joriy chegirma foizi", display: `${dashStats.value.active_discount_percent}%` },
+]);
 
-// Y o'qi belgilari (grafik balandligi 200px ga mos, ekrandagi kabi 0/20/50/70/100)
-const yTicks = [100, 70, 50, 20, 0]
+const yTicks = [100, 70, 50, 20, 0];
 </script>
 
 <style scoped>
@@ -286,7 +293,6 @@ const yTicks = [100, 70, 50, 20, 0]
   }
 }
 
-/* Foydalanuvchi "kamroq harakat" so'ragan bo'lsa, animatsiyalarni o'chiramiz */
 @media (prefers-reduced-motion: reduce) {
 
   .reveal,

@@ -13,30 +13,28 @@ const loading = ref(true);
 const addOpen = ref(false);
 const editItem = ref(null);
 const deleteItem = ref(null);
-const revealedId = ref(null);
 const savingAdd = ref(false);
 const savingEdit = ref(false);
 const deleting = ref(false);
 
-const form = reactive({ name: "", phone: "", login: "", password: "", active: true });
+// MUHIM: backend Cashier modelida faqat full_name, is_active, added_at bor.
+// "phone", "login ko'rsatish/parolni ko'rsatish" va "scans" kabi maydonlar
+// backend'da yo'q, shu sabab olib tashlandi. Kassir yaratishda email+password
+// bilan alohida foydalanuvchi hisobi ochiladi (buni keyin o'zgartirib bo'lmaydi).
+const addForm = reactive({ full_name: "", email: "", password: "" });
+const editForm = reactive({ full_name: "", is_active: true });
 
-function resetForm() {
-  form.name = "";
-  form.phone = "";
-  form.login = "";
-  form.password = "";
-  form.active = true;
+function resetAddForm() {
+  addForm.full_name = "";
+  addForm.email = "";
+  addForm.password = "";
 }
 
 function initials(name) {
   return (name || "?").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
 }
 
-function togglePasswordReveal(id) {
-  revealedId.value = revealedId.value === id ? null : id;
-}
-
-const activeCount = computed(() => items.value.filter((c) => c.active).length);
+const activeCount = computed(() => items.value.filter((c) => c.is_active).length);
 
 async function load() {
   loading.value = true;
@@ -50,23 +48,20 @@ onMounted(load);
 
 function openEdit(c) {
   editItem.value = c;
-  form.name = c.name;
-  form.phone = c.phone;
-  form.login = c.login;
-  form.password = "";
-  form.active = c.active;
+  editForm.full_name = c.full_name;
+  editForm.is_active = c.is_active;
 }
 
 async function submitAdd() {
   savingAdd.value = true;
   try {
-    await cashiersApi.create({ ...form });
+    await cashiersApi.create({ ...addForm });
     toast.success("Kassir qo'shildi");
     addOpen.value = false;
-    resetForm();
+    resetAddForm();
     await load();
   } catch (e) {
-    toast.error(e.response?.data?.login?.[0] || "Xatolik yuz berdi");
+    toast.error(e.response?.data?.email?.[0] || "Xatolik yuz berdi");
   } finally {
     savingAdd.value = false;
   }
@@ -75,9 +70,7 @@ async function submitAdd() {
 async function submitEdit() {
   savingEdit.value = true;
   try {
-    const payload = { ...form };
-    if (!payload.password) delete payload.password;
-    await cashiersApi.update(editItem.value.id, payload);
+    await cashiersApi.update(editItem.value.id, { ...editForm });
     toast.success("Kassir yangilandi");
     editItem.value = null;
     await load();
@@ -103,8 +96,12 @@ async function confirmDelete() {
 }
 
 async function toggleActive(c) {
-  await cashiersApi.toggleActive(c.id);
-  await load();
+  try {
+    await cashiersApi.update(c.id, { is_active: !c.is_active });
+    await load();
+  } catch (e) {
+    toast.error("Xatolik yuz berdi");
+  }
 }
 
 function fmtDate(d) {
@@ -126,7 +123,7 @@ function fmtDate(d) {
         </div>
         <button
           class="flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md active:scale-95"
-          @click="resetForm(); addOpen = true">
+          @click="resetAddForm(); addOpen = true">
           <span class="text-base leading-none">+</span> Qo'shish
         </button>
       </AppCard>
@@ -143,7 +140,6 @@ function fmtDate(d) {
               </div>
             </div>
             <div class="h-14 rounded-lg bg-secondary"></div>
-            <div class="h-16 rounded-lg bg-secondary"></div>
           </div>
         </AppCard>
       </div>
@@ -156,51 +152,24 @@ function fmtDate(d) {
             <div class="flex items-center gap-2">
               <span
                 class="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-sm font-semibold text-accent-foreground transition-transform duration-200 group-hover:scale-105">
-                {{ initials(c.name) }}
+                {{ initials(c.full_name) }}
               </span>
               <div>
-                <p class="font-semibold leading-tight">{{ c.name }}</p>
-                <p class="text-xs text-muted">{{ c.phone }}</p>
+                <p class="font-semibold leading-tight">{{ c.full_name }}</p>
+                <p class="text-xs text-muted">Qo'shilgan: {{ fmtDate(c.added_at) }}</p>
               </div>
             </div>
             <span class="flex items-center text-xs font-medium">
               <span class="mr-1 inline-block h-2 w-2 rounded-full"
-                :class="c.active ? 'bg-success animate-pulse-dot' : 'bg-muted'"></span>
-              {{ c.active ? "Faol" : "Nofaol" }}
+                :class="c.is_active ? 'bg-success animate-pulse-dot' : 'bg-muted'"></span>
+              {{ c.is_active ? "Faol" : "Nofaol" }}
             </span>
-          </div>
-
-          <div class="mb-3 grid grid-cols-2 gap-2">
-            <div class="rounded-lg bg-secondary p-3 transition-colors duration-150 group-hover:bg-secondary/80">
-              <p class="text-lg font-bold">{{ c.scans }}</p>
-              <p class="text-xs text-muted">Skaner</p>
-            </div>
-            <div class="rounded-lg bg-secondary p-3 transition-colors duration-150 group-hover:bg-secondary/80">
-              <p class="text-sm font-semibold">{{ fmtDate(c.added_date) }}</p>
-              <p class="text-xs text-muted">Qo'shildi</p>
-            </div>
-          </div>
-
-          <div class="mb-3 rounded-lg bg-secondary p-3 text-sm">
-            <p class="text-xs text-muted">Login</p>
-            <p class="font-semibold">{{ c.login }}</p>
-            <p class="mt-1 text-xs text-muted">Parol</p>
-            <div class="flex items-center justify-between">
-              <span class="font-semibold tracking-wider transition-all duration-150">
-                {{ revealedId === c.id ? (c.password || "—") : "••••••••••" }}
-              </span>
-              <button type="button"
-                class="rounded p-1 text-muted transition-colors duration-150 hover:bg-card hover:text-gray-900"
-                :title="revealedId === c.id ? 'Yashirish' : 'Ko\'rsatish'" @click="togglePasswordReveal(c.id)">
-                {{ revealedId === c.id ? "🙈" : "👁" }}
-              </button>
-            </div>
           </div>
 
           <div class="mb-3 flex items-center justify-between rounded-lg bg-secondary/60 px-3 py-2 text-xs">
             <span class="text-muted">Holati</span>
             <label class="relative inline-flex cursor-pointer items-center">
-              <input type="checkbox" class="peer sr-only" :checked="c.active" @change="toggleActive(c)" />
+              <input type="checkbox" class="peer sr-only" :checked="c.is_active" @change="toggleActive(c)" />
               <div class="h-5 w-9 rounded-full bg-muted/40 transition-colors duration-200 peer-checked:bg-success">
               </div>
               <div
@@ -216,7 +185,7 @@ function fmtDate(d) {
               ✎ Tahrirlash
             </button>
             <button
-              class="flex flex-1 items-center justify-center gap-1 rounded-full bg-red-50 py-2 text-sm font-medium text-destructive transition-all duration-150 hover:bg-red-100 active:scale-95"
+              class="flex flex-1 items-center justify-center gap-1 rounded-full border border-destructive/30 py-2 text-sm font-medium text-destructive transition-all duration-150 hover:bg-red-50 active:scale-95"
               @click="deleteItem = c">
               🗑 O'chirish
             </button>
@@ -233,28 +202,23 @@ function fmtDate(d) {
       <form class="space-y-3" @submit.prevent="submitAdd">
         <div>
           <label class="text-sm font-medium">Ism familiya</label>
-          <input v-model="form.name" required placeholder="Ism familiya"
+          <input v-model="addForm.full_name" required placeholder="Ism familiya"
             class="mt-1 h-11 w-full rounded-lg border border-border bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
         </div>
         <div>
-          <label class="text-sm font-medium">Telefon raqami</label>
-          <input v-model="form.phone" placeholder="+998 90 123 45 67"
-            class="mt-1 h-11 w-full rounded-lg border border-border bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
-        </div>
-        <div>
-          <label class="text-sm font-medium">Login</label>
-          <input v-model="form.login" required placeholder="Login"
+          <label class="text-sm font-medium">Email (login sifatida ishlatiladi)</label>
+          <input v-model="addForm.email" type="email" required placeholder="kassir@biznes.uz"
             class="mt-1 h-11 w-full rounded-lg border border-border bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
         </div>
         <div>
           <label class="text-sm font-medium">Parol</label>
-          <input v-model="form.password" type="password" required placeholder="Parol"
+          <input v-model="addForm.password" type="password" required placeholder="Parol"
             class="mt-1 h-11 w-full rounded-lg border border-border bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
         </div>
-        <label class="flex items-center gap-2 text-sm">
-          <input v-model="form.active" type="checkbox" class="h-4 w-4 accent-primary" />
-          Faol
-        </label>
+        <p class="text-xs text-muted">
+          Parolni keyinchalik bu paneldan ko'rish yoki o'zgartirish mumkin emas — uni kassirga
+          xabar qiling.
+        </p>
         <div class="flex gap-2 pt-1">
           <button type="button"
             class="h-11 flex-1 rounded-full border border-border text-sm font-medium transition-colors duration-150 hover:bg-secondary"
@@ -275,26 +239,11 @@ function fmtDate(d) {
       <form class="space-y-3" @submit.prevent="submitEdit">
         <div>
           <label class="text-sm font-medium">Ism familiya</label>
-          <input v-model="form.name" required
-            class="mt-1 h-11 w-full rounded-lg border border-border bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
-        </div>
-        <div>
-          <label class="text-sm font-medium">Telefon</label>
-          <input v-model="form.phone"
-            class="mt-1 h-11 w-full rounded-lg border border-border bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
-        </div>
-        <div>
-          <label class="text-sm font-medium">Login</label>
-          <input v-model="form.login" required
-            class="mt-1 h-11 w-full rounded-lg border border-border bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
-        </div>
-        <div>
-          <label class="text-sm font-medium">Yangi parol (ixtiyoriy)</label>
-          <input v-model="form.password" type="password" placeholder="O'zgartirmaslik uchun bo'sh qoldiring"
+          <input v-model="editForm.full_name" required
             class="mt-1 h-11 w-full rounded-lg border border-border bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
         </div>
         <label class="flex items-center gap-2 text-sm">
-          <input v-model="form.active" type="checkbox" class="h-4 w-4 accent-primary" />
+          <input v-model="editForm.is_active" type="checkbox" class="h-4 w-4 accent-primary" />
           Faol
         </label>
         <div class="flex gap-2 pt-1">
@@ -315,7 +264,7 @@ function fmtDate(d) {
 
     <AppModal :open="!!deleteItem" title="O'chirishni tasdiqlang" @close="deleteItem = null">
       <p class="text-sm text-muted">
-        "<span class="font-medium text-gray-900">{{ deleteItem?.name }}</span>" kassirini o'chirmoqchimisiz?
+        "<span class="font-medium text-gray-900">{{ deleteItem?.full_name }}</span>" kassirini o'chirmoqchimisiz?
       </p>
       <div class="mt-4 flex justify-end gap-2">
         <button
@@ -336,7 +285,6 @@ function fmtDate(d) {
 </template>
 
 <style scoped>
-/* Page entrance */
 .page-enter {
   animation: pageFadeIn 0.4s ease-out;
 }
@@ -353,7 +301,6 @@ function fmtDate(d) {
   }
 }
 
-/* Cashier cards enter/leave/move */
 .card-enter-active {
   transition: opacity 0.3s ease-out, transform 0.3s ease-out;
 }
@@ -377,7 +324,6 @@ function fmtDate(d) {
   transition: transform 0.3s ease;
 }
 
-/* Active status dot pulse */
 .animate-pulse-dot {
   position: relative;
 }
@@ -404,7 +350,6 @@ function fmtDate(d) {
   }
 }
 
-/* Empty state */
 .fade-in-up {
   animation: fadeInUp 0.35s ease-out;
 }

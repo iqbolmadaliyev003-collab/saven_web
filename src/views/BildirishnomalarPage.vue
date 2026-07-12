@@ -27,7 +27,8 @@ function fmtDate(d) {
   return `${date.getDate()}-${months[date.getMonth()]} ${date.getFullYear()}`;
 }
 
-const unreadCount = computed(() => items.value.filter((n) => !n.read).length);
+// Backend maydonlari: title, body, is_read, created_at (UserNotificationSerializer)
+const unreadCount = computed(() => items.value.filter((n) => !n.is_read).length);
 
 async function load() {
   loading.value = true;
@@ -40,9 +41,9 @@ async function load() {
 onMounted(load);
 
 async function markRead(n) {
-  if (n.read) return;
+  if (n.is_read) return;
   await notificationsApi.markRead(n.id);
-  n.read = true;
+  n.is_read = true;
 }
 
 async function markAllRead() {
@@ -50,7 +51,7 @@ async function markAllRead() {
   markingAll.value = true;
   try {
     await notificationsApi.markAllRead();
-    items.value.forEach((n) => (n.read = true));
+    items.value.forEach((n) => (n.is_read = true));
     toast.success("Barchasi o'qilgan deb belgilandi");
   } finally {
     markingAll.value = false;
@@ -101,12 +102,12 @@ async function markAllRead() {
             <span
               class="relative mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-base transition-transform duration-150 group-hover:scale-105">
               🔔
-              <span v-if="!n.read"
+              <span v-if="!n.is_read"
                 class="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-success ring-2 ring-white animate-pop"></span>
             </span>
             <div class="min-w-0 flex-1">
-              <p class="font-medium" :class="!n.read ? 'text-gray-900' : 'text-muted'">{{ n.title }}</p>
-              <p class="truncate text-sm text-muted">{{ n.description }}</p>
+              <p class="font-medium" :class="!n.is_read ? 'text-gray-900' : 'text-muted'">{{ n.title }}</p>
+              <p class="truncate text-sm text-muted">{{ n.body }}</p>
             </div>
             <p class="shrink-0 whitespace-nowrap pl-2 text-xs text-muted">{{ fmtDate(n.created_at) }}</p>
           </li>

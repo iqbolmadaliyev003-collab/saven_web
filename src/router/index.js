@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
 
 const routes = [
   {
@@ -59,8 +60,22 @@ const router = createRouter({
   routes,
 });
 
+// Auth guard: token bo'lmasa, faqat "public" sahifalarga (login, 404) kirishga
+// ruxsat beriladi, aks holda /login'ga qaytariladi. Login qilingan bo'lsa, /login'ga
+// qayta kirishga urinilsa /asosiy'ga yo'naltiriladi.
 router.beforeEach((to) => {
+  const authStore = useAuthStore();
+  const isAuthenticated = authStore.isAuthenticated;
+
   if (to.path === "/") {
+    return { path: "/asosiy" };
+  }
+
+  if (!to.meta.public && !isAuthenticated) {
+    return { path: "/login" };
+  }
+
+  if (to.path === "/login" && isAuthenticated) {
     return { path: "/asosiy" };
   }
 

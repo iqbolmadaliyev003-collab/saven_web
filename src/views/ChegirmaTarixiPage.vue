@@ -13,10 +13,16 @@ function fmt(n) {
 function fmtDate(d) {
   return new Date(d).toLocaleString("uz-UZ", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
+// Backend'da mijoz uchun "to'langan summa" alohida saqlanmaydi — asl narx (purchase_amount)
+// va chegirma summasi (discount_amount) orqali hisoblanadi.
+function finalPrice(r) {
+  return Number(r.purchase_amount || 0) - Number(r.discount_amount || 0);
+}
 
 const q = ref("");
 const all = ref([]);
 const loading = ref(true);
+const exporting = ref(false);
 const filterOpen = ref(false);
 const page = ref(1);
 const pageSize = 10;
@@ -24,13 +30,14 @@ const pageSize = 10;
 const dateFrom = ref("");
 const dateTo = ref("");
 const selectedCashiers = ref([]);
-const serviceFilter = ref("");
 const percentFilter = ref(null);
 
 async function load() {
   loading.value = true;
   try {
-    all.value = await historyApi.list();
+    // Backend: DiscountUsageSerializer -> id, customer, customer_email, cashier,
+    // cashier_name, applied_percent, purchase_amount, discount_amount, used_at
+    all.value = await historyApi.list({ ordering: "-used_at" });
   } finally {
     loading.value = false;
   }
@@ -38,13 +45,11 @@ async function load() {
 onMounted(load);
 
 const cashierOptions = computed(() => [...new Set(all.value.map((r) => r.cashier_name).filter(Boolean))]);
-const serviceOptions = computed(() => [...new Set(all.value.map((r) => r.service).filter(Boolean))]);
 
 const activeFilterCount = computed(() => {
   let n = 0;
   if (dateFrom.value || dateTo.value) n++;
   if (selectedCashiers.value.length) n++;
-  if (serviceFilter.value) n++;
   if (percentFilter.value) n++;
   return n;
 });
@@ -59,7 +64,6 @@ function clearFilters() {
   dateFrom.value = "";
   dateTo.value = "";
   selectedCashiers.value = [];
-  serviceFilter.value = "";
   percentFilter.value = null;
 }
 
@@ -74,16 +78,14 @@ const filtered = computed(() => {
     const s = q.value.toLowerCase();
     rows = rows.filter(
       (r) =>
-        r.client_name.toLowerCase().includes(s) ||
-        (r.cashier_name || "").toLowerCase().includes(s) ||
-        r.service.toLowerCase().includes(s)
+        (r.customer_email || "").toLowerCase().includes(s) ||
+        (r.cashier_name || "").toLowerCase().includes(s)
     );
   }
-  if (dateFrom.value) rows = rows.filter((r) => new Date(r.created_at) >= new Date(dateFrom.value));
-  if (dateTo.value) rows = rows.filter((r) => new Date(r.created_at) <= new Date(dateTo.value));
+  if (dateFrom.value) rows = rows.filter((r) => new Date(r.used_at) >= new Date(dateFrom.value));
+  if (dateTo.value) rows = rows.filter((r) => new Date(r.used_at) <= new Date(dateTo.value));
   if (selectedCashiers.value.length) rows = rows.filter((r) => selectedCashiers.value.includes(r.cashier_name));
-  if (serviceFilter.value) rows = rows.filter((r) => r.service === serviceFilter.value);
-  if (percentFilter.value) rows = rows.filter((r) => r.discount_percent === percentFilter.value);
+  if (percentFilter.value) rows = rows.filter((r) => r.applied_percent === percentFilter.value);
   return rows;
 });
 
@@ -97,30 +99,30 @@ function prevPage() {
   if (page.value > 1) page.value--;
 }
 
-function exportCsv() {
+async function exportCsv() {
   if (!filtered.value.length) {
     toast.info("Yuklash uchun ma'lumot yo'q");
     return;
   }
-  const header = ["Sana", "Mijoz", "Xizmat", "Kassir", "Chegirma", "Asl narx", "To'langan"];
-  const rows = filtered.value.map((r) => [
-    fmtDate(r.created_at),
-    r.client_name,
-    r.service,
-    r.cashier_name || "",
-    `${r.discount_percent}%`,
-    r.original_price,
-    r.final_price,
-  ]);
-  const csv = [header, ...rows].map((row) => row.join(",")).join("\n");
-  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "chegirma-tarixi.csv";
-  a.click();
-  URL.revokeObjectURL(url);
-  toast.success("Fayl yuklandi");
+  exporting.value = true;
+  try {
+    // Backend'dagi tayyor CSV export endpointi (sana filtri bilan)
+    const blob = await historyApi.exportCsv({
+      date_from: dateFrom.value || undefined,
+      date_to: dateTo.value || undefined,
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "chegirma-tarixi.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Fayl yuklandi");
+  } catch (e) {
+    toast.error("Yuklab olishda xatolik yuz berdi");
+  } finally {
+    exporting.value = false;
+  }
 }
 </script>
 
@@ -136,7 +138,7 @@ function exportCsv() {
           <div class="relative min-w-[200px] flex-1 group">
             <span
               class="absolute left-3 top-1/2 -translate-y-1/2 text-muted transition-transform duration-200 group-focus-within:scale-110">🔍</span>
-            <input v-model="q" placeholder="Qidirish"
+            <input v-model="q" placeholder="Mijoz yoki kassir bo'yicha qidirish"
               class="h-10 w-full rounded-full border border-transparent bg-input pl-9 pr-3 text-sm outline-none transition-all duration-200 focus:border-primary/40 focus:ring-4 focus:ring-primary/15" />
           </div>
 
@@ -185,13 +187,6 @@ function exportCsv() {
                   <p v-if="!cashierOptions.length" class="text-xs text-muted">Kassirlar topilmadi</p>
                 </div>
 
-                <label class="mb-1 block text-xs text-muted">Xizmat turi</label>
-                <select v-model="serviceFilter"
-                  class="mb-3 h-9 w-full rounded-lg border border-border bg-input px-2 text-sm transition-colors duration-150 focus:border-primary/50 focus:outline-none">
-                  <option value="">Tanlang</option>
-                  <option v-for="s in serviceOptions" :key="s" :value="s">{{ s }}</option>
-                </select>
-
                 <label class="mb-1 block text-xs text-muted">Chegirma foizi</label>
                 <div class="mb-4 flex gap-2">
                   <button v-for="p in [5, 10, 15]" :key="p" type="button"
@@ -211,10 +206,11 @@ function exportCsv() {
             </Transition>
           </div>
 
-          <button
-            class="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md active:scale-95"
+          <button :disabled="exporting"
+            class="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md active:scale-95 disabled:opacity-60"
             @click="exportCsv">
-            <span class="transition-transform duration-200 group-hover:-translate-y-0.5">⬇</span> Yuklash
+            <span class="transition-transform duration-200 group-hover:-translate-y-0.5">⬇</span>
+            {{ exporting ? "Yuklanmoqda..." : "Yuklash" }}
           </button>
 
           <span class="text-xs text-muted transition-opacity duration-300">{{ filtered.length }} ta natija</span>
@@ -226,7 +222,6 @@ function exportCsv() {
               <tr class="border-b text-left text-muted">
                 <th class="pb-2 font-normal">Sana</th>
                 <th class="pb-2 font-normal">Mijoz</th>
-                <th class="pb-2 font-normal">Xizmat</th>
                 <th class="pb-2 font-normal">Kassir</th>
                 <th class="pb-2 font-normal">Chegirma</th>
                 <th class="pb-2 font-normal">Asl narx</th>
@@ -237,7 +232,7 @@ function exportCsv() {
             <!-- Loading skeleton -->
             <tbody v-if="loading">
               <tr v-for="i in 6" :key="'sk' + i" class="border-b last:border-none">
-                <td class="py-3" colspan="7">
+                <td class="py-3" colspan="6">
                   <div class="h-4 w-full animate-pulse rounded bg-secondary" :style="{ animationDelay: i * 60 + 'ms' }">
                   </div>
                 </td>
@@ -248,24 +243,23 @@ function exportCsv() {
               <tr v-for="(r, i) in paged" :key="r.id"
                 class="group border-b transition-colors duration-150 last:border-none hover:bg-secondary/60"
                 :style="{ transitionDelay: (i * 25) + 'ms' }">
-                <td class="py-3 text-muted">{{ fmtDate(r.created_at) }}</td>
-                <td class="font-medium">{{ r.client_name }}</td>
-                <td>{{ r.service }}</td>
+                <td class="py-3 text-muted">{{ fmtDate(r.used_at) }}</td>
+                <td class="font-medium">{{ r.customer_email || "—" }}</td>
                 <td class="text-muted">{{ r.cashier_name || "—" }}</td>
                 <td>
                   <span
                     class="inline-block rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground transition-transform duration-150 group-hover:scale-105">
-                    {{ r.discount_percent }}%
+                    {{ r.applied_percent }}%
                   </span>
                 </td>
-                <td class="text-muted line-through">{{ fmt(r.original_price) }}</td>
-                <td class="font-semibold">{{ fmt(r.final_price) }} so'm</td>
+                <td class="text-muted line-through">{{ fmt(r.purchase_amount) }}</td>
+                <td class="font-semibold">{{ fmt(finalPrice(r)) }} so'm</td>
               </tr>
             </TransitionGroup>
 
             <tbody v-if="!loading && !filtered.length">
               <tr>
-                <td colspan="7" class="py-14 text-center">
+                <td colspan="6" class="py-14 text-center">
                   <div class="flex flex-col items-center gap-2 fade-in-up">
                     <span class="text-3xl">🔎</span>
                     <span class="text-muted">Natija topilmadi</span>
@@ -298,7 +292,6 @@ function exportCsv() {
 </template>
 
 <style scoped>
-/* Page entrance */
 .page-enter {
   animation: pageFadeIn 0.4s ease-out;
 }
@@ -315,7 +308,6 @@ function exportCsv() {
   }
 }
 
-/* Filter dropdown transition */
 .dropdown-enter-active {
   transition: opacity 0.18s ease-out, transform 0.18s ease-out;
 }
@@ -330,7 +322,6 @@ function exportCsv() {
   transform: scale(0.96) translateY(-4px);
 }
 
-/* Table row stagger */
 .row-enter-active {
   transition: opacity 0.3s ease-out, transform 0.3s ease-out;
 }
@@ -344,7 +335,6 @@ function exportCsv() {
   transition: transform 0.25s ease;
 }
 
-/* Badge / filter chip pop */
 .animate-pop {
   animation: pop 0.25s ease-out;
 }
@@ -363,7 +353,6 @@ function exportCsv() {
   }
 }
 
-/* Empty state fade */
 .fade-in-up {
   animation: fadeInUp 0.35s ease-out;
 }
@@ -380,7 +369,6 @@ function exportCsv() {
   }
 }
 
-/* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
 
   .page-enter,

@@ -11,14 +11,11 @@ export const useAuthStore = defineStore("auth", {
       state.business?.name ? state.business.name.charAt(0).toUpperCase() : "S",
   },
   actions: {
-    async login(login, password) {
-      // Backend ishlamayotgan paytda vaqtincha asl tekshiruvlarni o'chirmay, kommentariya sifatida qoldiramiz:
-      // const business = await authApi.login(login, password);
-      // this.business = business;
-      // return business;
-      const business = { name: login || "Demo Business" };
-      this.business = business;
-      return business;
+    async login(email, password) {
+      // 1) login qilib token olamiz
+      await authApi.login(email, password);
+      // 2) shu foydalanuvchining biznes profilini yuklaymiz (my-business/)
+      return await this.fetchProfile();
     },
     async fetchProfile() {
       this.business = await businessApi.me();
