@@ -63,6 +63,8 @@ const router = createRouter({
 // Auth guard: token bo'lmasa, faqat "public" sahifalarga (login, 404) kirishga
 // ruxsat beriladi, aks holda /login'ga qaytariladi. Login qilingan bo'lsa, /login'ga
 // qayta kirishga urinilsa /asosiy'ga yo'naltiriladi.
+// TODO: Login tekshiruvini vaqtinchalik o'chirdim, keyinroq qayta qo'shib beraman
+/*
 router.beforeEach((to) => {
   const authStore = useAuthStore();
   const isAuthenticated = authStore.isAuthenticated;
@@ -81,5 +83,6 @@ router.beforeEach((to) => {
 
   return true;
 });
+*/
 
 export default router;
