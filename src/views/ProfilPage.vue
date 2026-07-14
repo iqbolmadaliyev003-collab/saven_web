@@ -108,14 +108,14 @@ function confirmLogout() {
       <AppCard class="flex items-center justify-between p-5">
         <h1 class="text-xl font-bold tracking-tight">Profil</h1>
         <button
-          class="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md active:scale-95 disabled:opacity-70"
+          class="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md active:scale-95 disabled:opacity-70"
           :disabled="saving || loading"
           @click="save"
         >
           <span v-if="!saving">Saqlash</span>
           <span v-else class="inline-flex items-center gap-2">
             <span
-              class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground"
+              class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white"
             ></span>
             Saqlanmoqda…
           </span>
@@ -275,16 +275,53 @@ function confirmLogout() {
             </p>
 
             <button
-              class="mb-2 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md active:scale-95"
+              class="mb-2 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md active:scale-95"
             >
-              📞 Bog'lanish
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="1.3em"
+                height="1.3em"
+                viewBox="0 0 24 24"
+              >
+                <path d="M0 0h24v24H0z" fill="none" />
+                <path
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M7.829 16.171a20.9 20.9 0 0 1-4.846-7.614c-.573-1.564-.048-3.282 1.13-4.46l.729-.728a2.11 2.11 0 0 1 2.987 0l1.707 1.707a2.11 2.11 0 0 1 0 2.987l-.42.42a1.81 1.81 0 0 0 0 2.56l3.84 3.841a1.81 1.81 0 0 0 2.56 0l.421-.42a2.11 2.11 0 0 1 2.987 0l1.707 1.707a2.11 2.11 0 0 1 0 2.987l-.728.728c-1.178 1.179-2.896 1.704-4.46 1.131a20.9 20.9 0 0 1-7.614-4.846Z"
+                />
+              </svg>
+              Bog'lanish
             </button>
 
             <button
               class="flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm font-medium text-destructive transition-all duration-150 hover:bg-red-50 active:scale-95"
               @click="showLogoutModal = true"
             >
-              ↪ Chiqish
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="1em"
+                height="1em"
+                viewBox="0 0 20 20"
+              >
+                <path d="M0 0h20v20H0z" fill="none" />
+                <g fill="currentColor" fill-rule="evenodd" clip-rule="evenodd">
+                  <path
+                    d="M15.347 7.116a.5.5 0 0 1 .704.064l2.083 2.5a.5.5 0 0 1-.768.64l-2.083-2.5a.5.5 0 0 1 .064-.704"
+                  />
+                  <path
+                    d="M15.347 12.884a.5.5 0 0 1-.064-.704l2.083-2.5a.5.5 0 1 1 .768.64l-2.083 2.5a.5.5 0 0 1-.704.064"
+                  />
+                  <path
+                    d="M17.5 10a.5.5 0 0 1-.5.5H9.5a.5.5 0 0 1 0-1H17a.5.5 0 0 1 .5.5m-14-7a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1H4a.5.5 0 0 1-.5-.5m0 14a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1H4a.5.5 0 0 1-.5-.5"
+                  />
+                  <path
+                    d="M13 2.5a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V3a.5.5 0 0 1 .5-.5m0 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 1 .5-.5m-9-10a.5.5 0 0 1 .5.5v14a.5.5 0 0 1-1 0V3a.5.5 0 0 1 .5-.5"
+                  />
+                </g>
+              </svg>
+              Chiqish
             </button>
           </AppCard>
         </div>
@@ -298,9 +335,30 @@ function confirmLogout() {
     >
       <div class="flex flex-col items-center gap-3 py-2 text-center">
         <div
-          class="flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-2xl"
+          class="flex h-14 w-14 items-center justify-center rounded-full bg-[#FEE4E2] text-2xl text-red-600"
         >
-          🔌
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="1em"
+            height="1em"
+            viewBox="0 0 20 20"
+          >
+            <path d="M0 0h20v20H0z" fill="none" />
+            <g fill="currentColor" fill-rule="evenodd" clip-rule="evenodd">
+              <path
+                d="M15.347 7.116a.5.5 0 0 1 .704.064l2.083 2.5a.5.5 0 0 1-.768.64l-2.083-2.5a.5.5 0 0 1 .064-.704"
+              />
+              <path
+                d="M15.347 12.884a.5.5 0 0 1-.064-.704l2.083-2.5a.5.5 0 1 1 .768.64l-2.083 2.5a.5.5 0 0 1-.704.064"
+              />
+              <path
+                d="M17.5 10a.5.5 0 0 1-.5.5H9.5a.5.5 0 0 1 0-1H17a.5.5 0 0 1 .5.5m-14-7a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1H4a.5.5 0 0 1-.5-.5m0 14a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1H4a.5.5 0 0 1-.5-.5"
+              />
+              <path
+                d="M13 2.5a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V3a.5.5 0 0 1 .5-.5m0 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 1 .5-.5m-9-10a.5.5 0 0 1 .5.5v14a.5.5 0 0 1-1 0V3a.5.5 0 0 1 .5-.5"
+              />
+            </g>
+          </svg>
         </div>
         <h3 class="text-base font-semibold">
           Siz tizimdan chiqishni xohlaysizmi?
@@ -309,7 +367,7 @@ function confirmLogout() {
           Agar davom etsangiz, siz qayta tizimga kirishingiz kerak bo'ladi.
         </p>
       </div>
-      <div class="mt-4 flex justify-end gap-2">
+      <div class="mt-4 flex justify-between gap-2">
         <button
           class="rounded-full border border-border px-4 py-2 text-sm transition-colors duration-150 hover:bg-secondary"
           :disabled="loggingOut"
