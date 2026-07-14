@@ -19,8 +19,8 @@ async function handleSubmit() {
   errorMessage.value = ""; // eski xatoni tozalash
   loading.value = true;
   try {
-    await authStore.login(login.value, password.value);
-    router.push("/asosiy");
+    const user = await authStore.login(login.value, password.value);
+    router.push(user.role === "cashier" ? "/kassir/dashboard" : "/asosiy");
   } catch (e) {
     errorMessage.value = "Email yoki parol noto'g'ri. Iltimos qayta tekshiring.";
   } finally {
