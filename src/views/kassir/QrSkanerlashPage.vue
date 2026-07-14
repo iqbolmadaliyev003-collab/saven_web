@@ -15,7 +15,12 @@ function fmt(n) {
   return Number(n || 0).toLocaleString("ru-RU");
 }
 
-const STEPS = [{ label: "Skanerlash" }, { label: "Mijoz" }, { label: "Summa" }, { label: "Tasdiqlash" }];
+const STEPS = [
+  { label: "Skanerlash" },
+  { label: "Mijoz" },
+  { label: "Summa" },
+  { label: "Tasdiqlash" },
+];
 const step = ref(1); // 1..4, muvaffaqiyat ekrani step===5
 
 // ---------------- 1-qadam: QR skanerlash ----------------
@@ -30,12 +35,15 @@ let detector = null;
 async function startCamera() {
   cameraError.value = "";
   if (!("BarcodeDetector" in window)) {
-    cameraError.value = "Bu brauzer kamera orqali QR o'qishni qo'llab-quvvatlamaydi. QR kodni qo'lda kiriting.";
+    cameraError.value =
+      "Bu brauzer kamera orqali QR o'qishni qo'llab-quvvatlamaydi. QR kodni qo'lda kiriting.";
     return;
   }
   try {
     detector = new window.BarcodeDetector({ formats: ["qr_code"] });
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment" },
+    });
     videoEl.value.srcObject = stream;
     await videoEl.value.play();
     scanning.value = true;
@@ -99,9 +107,11 @@ const customer = ref(null);
 // ---------------- 3-qadam: Summa ----------------
 const amount = ref(0);
 const discountAmount = computed(() =>
-  Math.round((amount.value * (customer.value?.discount_percent || 0)) / 100)
+  Math.round((amount.value * (customer.value?.discount_percent || 0)) / 100),
 );
-const finalAmount = computed(() => Math.max(0, amount.value - discountAmount.value));
+const finalAmount = computed(() =>
+  Math.max(0, amount.value - discountAmount.value),
+);
 
 // ---------------- 4-qadam: Tasdiqlash ----------------
 const services = ref([]);
@@ -113,7 +123,7 @@ async function loadServices() {
 }
 
 const selectedServiceName = computed(
-  () => services.value.find((s) => s.id === serviceId.value)?.name || ""
+  () => services.value.find((s) => s.id === serviceId.value)?.name || "",
 );
 
 const submitting = ref(false);
@@ -208,37 +218,68 @@ startCamera();
       <div v-if="step === 1" class="grid gap-4 md:grid-cols-3">
         <AppCard class="overflow-hidden p-0 md:col-span-2">
           <div class="relative aspect-video w-full bg-black">
-            <video v-if="!cameraError" ref="videoEl" class="h-full w-full object-cover" muted playsinline></video>
-            <div v-else class="flex h-full flex-col items-center justify-center gap-3 p-6 text-center text-white/70">
-              <svg viewBox="0 0 24 24" class="h-10 w-10" fill="none" stroke="currentColor" stroke-width="1.5">
-                <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
+            <video
+              v-if="!cameraError"
+              ref="videoEl"
+              class="h-full w-full object-cover"
+              muted
+              playsinline
+            ></video>
+            <div
+              v-else
+              class="flex h-full flex-col items-center justify-center gap-3 p-6 text-center text-white/70"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                class="h-10 w-10"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <rect x="3" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="3" width="7" height="7" rx="1" />
                 <rect x="3" y="14" width="7" height="7" rx="1" />
               </svg>
               <p class="text-sm">{{ cameraError }}</p>
             </div>
-            <div v-if="!cameraError" class="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <div
+              v-if="!cameraError"
+              class="pointer-events-none absolute inset-0 flex items-center justify-center"
+            >
               <div class="h-40 w-40 rounded-2xl border-2 border-white/70"></div>
             </div>
           </div>
           <p class="p-4 text-center text-sm text-muted">
-            Mijozning telefonidagi QR ni kameraga tutib turing.<br />QR avtomatik taniladi.
+            Mijozning telefonidagi QR ni kameraga tutib turing.<br />QR
+            avtomatik taniladi.
           </p>
         </AppCard>
 
         <AppCard class="space-y-3 p-5">
-          <div class="rounded-xl border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+          <div
+            class="rounded-xl border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800"
+          >
             <p class="font-semibold">Eslatma</p>
-            <p class="mt-0.5 text-xs">QR har 5 daqiqada yangilanadi. Eski QR ishlamaydi.</p>
+            <p class="mt-0.5 text-xs">
+              QR har 5 daqiqada yangilanadi. Eski QR ishlamaydi.
+            </p>
           </div>
 
           <div class="space-y-1.5">
-            <label class="text-xs font-medium text-gray-700">QR kod ishlamasa, qo'lda kiriting</label>
+            <label class="text-xs font-medium text-gray-700"
+              >QR kod ishlamasa, qo'lda kiriting</label
+            >
             <div class="flex gap-2">
-              <input v-model="manualCode" placeholder="Kod"
+              <input
+                v-model="manualCode"
+                placeholder="Kod"
                 class="h-10 w-full rounded-lg border border-transparent bg-input px-3 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-                @keyup.enter="submitManualCode" />
-              <button @click="submitManualCode"
-                class="shrink-0 rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+                @keyup.enter="submitManualCode"
+              />
+              <button
+                @click="submitManualCode"
+                class="shrink-0 rounded-lg bg-primary px-3 text-sm font-medium text-white hover:bg-primary/90"
+              >
                 OK
               </button>
             </div>
@@ -247,10 +288,22 @@ startCamera();
       </div>
 
       <!-- 2-QADAM: Mijoz -->
-      <AppCard v-else-if="step === 2 && customer" class="grid gap-6 p-5 md:grid-cols-2">
+      <AppCard
+        v-else-if="step === 2 && customer"
+        class="grid gap-6 p-5 md:grid-cols-2"
+      >
         <div class="flex items-center gap-3">
-          <span class="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-sm font-bold text-accent-foreground">
-            {{ (customer.full_name || "?").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase() }}
+          <span
+            class="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-sm font-bold text-accent-foreground"
+          >
+            {{
+              (customer.full_name || "?")
+                .split(" ")
+                .map((p) => p[0])
+                .slice(0, 2)
+                .join("")
+                .toUpperCase()
+            }}
           </span>
           <div>
             <p class="font-semibold">{{ customer.full_name }}</p>
@@ -265,23 +318,39 @@ startCamera();
           </div>
           <div>
             <p class="text-xs text-muted">Oxirgi tashrif</p>
-            <p class="font-semibold">{{ customer.last_visit_days_ago }} kun oldin</p>
+            <p class="font-semibold">
+              {{ customer.last_visit_days_ago }} kun oldin
+            </p>
           </div>
         </div>
 
         <div class="md:col-span-2">
           <p class="mb-2 text-sm font-semibold">A'zolik ma'lumotlari</p>
           <div class="space-y-2 rounded-xl bg-secondary p-3 text-sm">
-            <div class="flex justify-between"><span class="text-muted">Turi</span><span class="font-medium">{{ customer.membership_type }}</span></div>
-            <div class="flex justify-between"><span class="text-muted">Holati</span><span class="font-medium text-primary">{{ customer.membership_status }}</span></div>
+            <div class="flex justify-between">
+              <span class="text-muted">Turi</span
+              ><span class="font-medium">{{ customer.membership_type }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-muted">Holati</span
+              ><span class="font-medium text-primary">{{
+                customer.membership_status
+              }}</span>
+            </div>
           </div>
         </div>
 
         <div class="flex gap-2 md:col-span-2">
-          <button @click="goBack" class="h-11 flex-1 rounded-xl border border-border text-sm font-medium hover:bg-secondary">
+          <button
+            @click="goBack"
+            class="h-11 flex-1 rounded-xl border border-border text-sm font-medium hover:bg-secondary"
+          >
             Orqaga
           </button>
-          <button @click="goToStep3" class="h-11 flex-1 rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90">
+          <button
+            @click="goToStep3"
+            class="h-11 flex-1 rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+          >
             Davom etish
           </button>
         </div>
@@ -300,30 +369,58 @@ startCamera();
         <AppCard class="flex flex-col justify-between p-5">
           <div>
             <div class="flex items-center gap-3 border-b border-border pb-4">
-              <span class="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
-                {{ (customer.full_name || "?").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase() }}
+              <span
+                class="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground"
+              >
+                {{
+                  (customer.full_name || "?")
+                    .split(" ")
+                    .map((p) => p[0])
+                    .slice(0, 2)
+                    .join("")
+                    .toUpperCase()
+                }}
               </span>
               <div>
                 <p class="text-sm font-semibold">{{ customer.full_name }}</p>
-                <p class="text-xs text-primary">{{ customer.membership_type }}</p>
+                <p class="text-xs text-primary">
+                  {{ customer.membership_type }}
+                </p>
               </div>
             </div>
 
             <p class="mb-2 mt-4 text-sm font-semibold">Hisob</p>
             <div class="space-y-2 text-sm">
-              <div class="flex justify-between"><span class="text-muted">Asl narx</span><span>{{ amount ? fmt(amount) + " so'm" : "-" }}</span></div>
-              <div class="flex justify-between"><span class="text-muted">Chegirma ({{ customer.discount_percent }}%)</span><span>{{ amount ? fmt(discountAmount) + " so'm" : "-" }}</span></div>
-              <div class="flex justify-between font-semibold"><span>Mijoz to'laydi</span><span class="text-primary">{{ amount ? fmt(finalAmount) + " so'm" : "-" }}</span></div>
+              <div class="flex justify-between">
+                <span class="text-muted">Asl narx</span
+                ><span>{{ amount ? fmt(amount) + " so'm" : "-" }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-muted"
+                  >Chegirma ({{ customer.discount_percent }}%)</span
+                ><span>{{ amount ? fmt(discountAmount) + " so'm" : "-" }}</span>
+              </div>
+              <div class="flex justify-between font-semibold">
+                <span>Mijoz to'laydi</span
+                ><span class="text-primary">{{
+                  amount ? fmt(finalAmount) + " so'm" : "-"
+                }}</span>
+              </div>
             </div>
           </div>
 
           <div class="mt-4 flex flex-col gap-2">
-            <button @click="goToStep4"
+            <button
+              @click="goToStep4"
               class="h-11 rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-              :disabled="amount <= 0">
+              :disabled="amount <= 0"
+            >
               Hisoblash va davom etish
             </button>
-            <button @click="goBack" class="h-11 rounded-xl border border-border text-sm font-medium hover:bg-secondary">
+            <button
+              @click="goBack"
+              class="h-11 rounded-xl border border-border text-sm font-medium hover:bg-secondary"
+            >
               Orqaga
             </button>
           </div>
@@ -333,33 +430,68 @@ startCamera();
       <!-- 4-QADAM: Tasdiqlash -->
       <div v-else-if="step === 4" class="relative grid gap-4 md:grid-cols-2">
         <Transition name="fade">
-          <div v-if="validationError"
-            class="absolute -top-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-lg bg-destructive px-4 py-2 text-sm text-white shadow-lg">
+          <div
+            v-if="validationError"
+            class="absolute -top-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-lg bg-destructive px-4 py-2 text-sm text-white shadow-lg"
+          >
             {{ validationError }}
           </div>
         </Transition>
 
         <AppCard class="p-5">
           <div class="flex items-center gap-3">
-            <span class="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
-              {{ (customer.full_name || "?").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase() }}
+            <span
+              class="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground"
+            >
+              {{
+                (customer.full_name || "?")
+                  .split(" ")
+                  .map((p) => p[0])
+                  .slice(0, 2)
+                  .join("")
+                  .toUpperCase()
+              }}
             </span>
             <div>
               <p class="text-sm font-semibold">{{ customer.full_name }}</p>
-              <p class="text-xs text-primary">{{ customer.membership_type }} <span class="text-muted">{{ customer.code }}</span></p>
+              <p class="text-xs text-primary">
+                {{ customer.membership_type }}
+                <span class="text-muted">{{ customer.code }}</span>
+              </p>
             </div>
           </div>
           <div class="mt-4 space-y-2 border-t border-border pt-4 text-sm">
-            <div class="flex justify-between"><span class="text-muted">Asl narx</span><span>{{ fmt(amount) }} so'm</span></div>
-            <div class="flex justify-between"><span class="text-muted">Chegirma ({{ customer.discount_percent }}%)</span><span class="text-destructive">- {{ fmt(discountAmount) }} so'm</span></div>
-            <div class="flex justify-between text-base font-bold"><span>Mijoz to'laydi</span><span class="text-primary">{{ fmt(finalAmount) }} so'm</span></div>
+            <div class="flex justify-between">
+              <span class="text-muted">Asl narx</span
+              ><span>{{ fmt(amount) }} so'm</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-muted"
+                >Chegirma ({{ customer.discount_percent }}%)</span
+              ><span class="text-destructive"
+                >- {{ fmt(discountAmount) }} so'm</span
+              >
+            </div>
+            <div class="flex justify-between text-base font-bold">
+              <span>Mijoz to'laydi</span
+              ><span class="text-primary">{{ fmt(finalAmount) }} so'm</span>
+            </div>
           </div>
         </AppCard>
 
         <AppCard class="p-5">
           <div class="flex items-center gap-3 border-b border-border pb-4">
-            <span class="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
-              {{ (customer.full_name || "?").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase() }}
+            <span
+              class="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground"
+            >
+              {{
+                (customer.full_name || "?")
+                  .split(" ")
+                  .map((p) => p[0])
+                  .slice(0, 2)
+                  .join("")
+                  .toUpperCase()
+              }}
             </span>
             <div>
               <p class="text-sm font-semibold">{{ customer.full_name }}</p>
@@ -368,27 +500,45 @@ startCamera();
           </div>
 
           <div class="mt-4 space-y-1.5">
-            <label class="text-xs font-medium text-gray-700">Xizmat turi <span class="text-destructive">*</span></label>
-            <select v-model="serviceId"
+            <label class="text-xs font-medium text-gray-700"
+              >Xizmat turi <span class="text-destructive">*</span></label
+            >
+            <select
+              v-model="serviceId"
               class="h-10 w-full rounded-lg border bg-input px-3 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-              :class="validationError ? 'border-destructive' : 'border-transparent'">
+              :class="
+                validationError ? 'border-destructive' : 'border-transparent'
+              "
+            >
               <option value="" disabled>Tanlang</option>
-              <option v-for="s in services" :key="s.id" :value="s.id">{{ s.name }}</option>
+              <option v-for="s in services" :key="s.id" :value="s.id">
+                {{ s.name }}
+              </option>
             </select>
           </div>
 
           <div class="mt-3 space-y-1.5">
             <label class="text-xs font-medium text-gray-700">Izoh</label>
-            <textarea v-model="comment" rows="3" placeholder="Qo'shimcha izoh"
-              class="w-full resize-none rounded-lg border border-transparent bg-input px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"></textarea>
+            <textarea
+              v-model="comment"
+              rows="3"
+              placeholder="Qo'shimcha izoh"
+              class="w-full resize-none rounded-lg border border-transparent bg-input px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+            ></textarea>
           </div>
 
           <div class="mt-4 flex flex-col gap-2">
-            <button @click="confirmTransaction" :disabled="submitting"
-              class="h-11 rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60">
+            <button
+              @click="confirmTransaction"
+              :disabled="submitting"
+              class="h-11 rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+            >
               {{ submitting ? "Yuborilmoqda..." : "Tasdiqlash" }}
             </button>
-            <button @click="goBack" class="h-11 rounded-xl border border-border text-sm font-medium hover:bg-secondary">
+            <button
+              @click="goBack"
+              class="h-11 rounded-xl border border-border text-sm font-medium hover:bg-secondary"
+            >
               Orqaga
             </button>
           </div>
@@ -398,32 +548,68 @@ startCamera();
       <!-- 5-QADAM: Muvaffaqiyat -->
       <div v-else-if="step === 5 && result" class="grid gap-4 md:grid-cols-2">
         <AppCard class="flex flex-col items-center p-6 text-center">
-          <span class="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="2.5"
-              stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+          <span
+            class="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              class="h-7 w-7"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
           </span>
           <h2 class="mt-3 text-xl font-bold">Muvaffaqiyatli!</h2>
           <p class="text-sm text-muted">Chegirma qo'llanildi</p>
 
-          <div class="mt-4 w-full space-y-2 border-t border-border pt-4 text-left text-sm">
-            <div class="flex justify-between"><span class="text-muted">Mijoz</span><span class="font-medium">{{ result.customer_name }}</span></div>
-            <div class="flex justify-between"><span class="text-muted">Xizmat</span><span class="font-medium">{{ result.service_name }}</span></div>
-            <div class="flex justify-between"><span class="text-muted">A'zolik</span><span class="font-medium">{{ result.membership_type }}</span></div>
-            <div class="flex justify-between"><span class="text-muted">Asl narx</span><span class="text-muted line-through">{{ fmt(result.purchase_amount) }}</span></div>
-            <div class="flex justify-between"><span class="text-muted">Chegirma</span><span>- {{ fmt(result.discount_amount) }}</span></div>
+          <div
+            class="mt-4 w-full space-y-2 border-t border-border pt-4 text-left text-sm"
+          >
+            <div class="flex justify-between">
+              <span class="text-muted">Mijoz</span
+              ><span class="font-medium">{{ result.customer_name }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-muted">Xizmat</span
+              ><span class="font-medium">{{ result.service_name }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-muted">A'zolik</span
+              ><span class="font-medium">{{ result.membership_type }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-muted">Asl narx</span
+              ><span class="text-muted line-through">{{
+                fmt(result.purchase_amount)
+              }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-muted">Chegirma</span
+              ><span>- {{ fmt(result.discount_amount) }}</span>
+            </div>
           </div>
           <div class="mt-3 w-full rounded-xl bg-accent p-3">
             <p class="text-xs text-accent-foreground">Kassaga tushdi</p>
-            <p class="text-2xl font-bold text-primary">{{ fmt(result.final_amount) }} so'm</p>
+            <p class="text-2xl font-bold text-primary">
+              {{ fmt(result.final_amount) }} so'm
+            </p>
           </div>
 
           <div class="mt-4 flex w-full gap-2">
-            <RouterLink to="/kassir/dashboard"
-              class="flex h-11 flex-1 items-center justify-center rounded-xl border border-border text-sm font-medium hover:bg-secondary">
+            <RouterLink
+              to="/kassir/dashboard"
+              class="flex h-11 flex-1 items-center justify-center rounded-xl border border-border text-sm font-medium hover:bg-secondary"
+            >
               Dashboardga qaytish
             </RouterLink>
-            <button @click="restart"
-              class="h-11 flex-1 rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90">
+            <button
+              @click="restart"
+              class="h-11 flex-1 rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+            >
               QR Skanerlash
             </button>
           </div>
@@ -432,22 +618,55 @@ startCamera();
         <AppCard class="p-6 text-sm">
           <p class="text-center font-semibold">Saven</p>
           <p class="text-center text-xs text-muted">Chek</p>
-          <div class="mt-4 space-y-1.5 border-t border-dashed border-border pt-4">
-            <div class="flex justify-between"><span class="text-muted">Sana</span><span>{{ result.time.toLocaleDateString("uz-UZ") }}</span></div>
-            <div class="flex justify-between"><span class="text-muted">Vaqt</span><span>{{ result.time.toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit" }) }}</span></div>
-            <div class="flex justify-between"><span class="text-muted">Mijoz</span><span>{{ result.customer_name }}</span></div>
-            <div class="flex justify-between"><span class="text-muted">A'zolik</span><span>{{ result.membership_type }}</span></div>
-            <div class="flex justify-between"><span class="text-muted">{{ result.service_name }}</span><span>{{ fmt(result.purchase_amount) }}</span></div>
-            <div class="flex justify-between"><span class="text-muted">Chegirma ({{ result.discount_percent }}%)</span><span>- {{ fmt(result.discount_amount) }}</span></div>
+          <div
+            class="mt-4 space-y-1.5 border-t border-dashed border-border pt-4"
+          >
+            <div class="flex justify-between">
+              <span class="text-muted">Sana</span
+              ><span>{{ result.time.toLocaleDateString("uz-UZ") }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-muted">Vaqt</span
+              ><span>{{
+                result.time.toLocaleTimeString("uz-UZ", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-muted">Mijoz</span
+              ><span>{{ result.customer_name }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-muted">A'zolik</span
+              ><span>{{ result.membership_type }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-muted">{{ result.service_name }}</span
+              ><span>{{ fmt(result.purchase_amount) }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-muted"
+                >Chegirma ({{ result.discount_percent }}%)</span
+              ><span>- {{ fmt(result.discount_amount) }}</span>
+            </div>
           </div>
-          <div class="mt-3 flex justify-between border-t border-dashed border-border pt-3 text-base font-bold">
+          <div
+            class="mt-3 flex justify-between border-t border-dashed border-border pt-3 text-base font-bold"
+          >
             <span>Jami</span><span>{{ fmt(result.final_amount) }} so'm</span>
           </div>
           <div class="mt-4 flex justify-center">
-            <img :src="`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=saven-receipt-${encodeURIComponent(result.id || Date.now())}`"
-              alt="Chek QR" class="h-28 w-28" />
+            <img
+              :src="`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=saven-receipt-${encodeURIComponent(result.id || Date.now())}`"
+              alt="Chek QR"
+              class="h-28 w-28"
+            />
           </div>
-          <p class="mt-2 text-center text-xs text-muted">Saven orqali<br />Rahmat! Qaytib keling</p>
+          <p class="mt-2 text-center text-xs text-muted">
+            Saven orqali<br />Rahmat! Qaytib keling
+          </p>
         </AppCard>
       </div>
     </div>
