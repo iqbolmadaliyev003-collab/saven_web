@@ -28,7 +28,12 @@ const categoryName = ref("");
 const cashiersCount = ref(0);
 
 const initials = computed(() =>
-  (profile.name || "?").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()
+  (profile.name || "?")
+    .split(" ")
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase(),
 );
 
 const saving = ref(false);
@@ -36,7 +41,10 @@ const saving = ref(false);
 async function load() {
   loading.value = true;
   try {
-    const [business, dash] = await Promise.all([businessApi.me(), dashboardApi.stats()]);
+    const [business, dash] = await Promise.all([
+      businessApi.me(),
+      dashboardApi.stats(),
+    ]);
     profile.name = business.name || "";
     profile.description = business.description || "";
     profile.full_address = business.full_address || "";
@@ -89,7 +97,7 @@ function confirmLogout() {
   setTimeout(() => {
     loggingOut.value = false;
     showLogoutModal.value = false;
-    router.push("/login").catch(() => { });
+    router.push("/login").catch(() => {});
   }, 300);
 }
 </script>
@@ -101,11 +109,14 @@ function confirmLogout() {
         <h1 class="text-xl font-bold tracking-tight">Profil</h1>
         <button
           class="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md active:scale-95 disabled:opacity-70"
-          :disabled="saving || loading" @click="save">
+          :disabled="saving || loading"
+          @click="save"
+        >
           <span v-if="!saving">Saqlash</span>
           <span v-else class="inline-flex items-center gap-2">
             <span
-              class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground"></span>
+              class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground"
+            ></span>
             Saqlanmoqda…
           </span>
         </button>
@@ -113,20 +124,32 @@ function confirmLogout() {
 
       <div class="grid gap-4 lg:grid-cols-[2fr_1fr] items-start">
         <!-- LEFT: profile card -->
-        <AppCard class="p-6 transition-all duration-200 hover:shadow-lg rise" style="animation-delay: 0.05s">
+        <AppCard
+          class="p-6 transition-all duration-200 hover:shadow-lg rise"
+          style="animation-delay: 0.05s"
+        >
           <div class="mb-5 flex items-center gap-4">
             <div class="relative h-[62px] w-[62px] shrink-0">
               <div class="absolute inset-0 rounded-full ring-glow"></div>
               <div
-                class="absolute inset-[3px] flex items-center justify-center rounded-full bg-accent text-lg font-bold text-accent-foreground">
+                class="absolute inset-[3px] flex items-center justify-center rounded-full bg-accent text-lg font-bold text-accent-foreground"
+              >
                 {{ initials }}
               </div>
             </div>
             <div>
-              <h2 class="text-lg font-semibold leading-tight">{{ profile.name || "—" }}</h2>
-              <p class="mt-0.5 flex items-center gap-1.5 text-sm font-medium text-success">
-                <span class="relative inline-flex h-2 w-2 rounded-full bg-success">
-                  <span class="absolute inset-0 rounded-full bg-success animate-pulse-dot"></span>
+              <h2 class="text-lg font-semibold leading-tight">
+                {{ profile.name || "—" }}
+              </h2>
+              <p
+                class="mt-0.5 flex items-center gap-1.5 text-sm font-medium text-success"
+              >
+                <span
+                  class="relative inline-flex h-2 w-2 rounded-full bg-success"
+                >
+                  <span
+                    class="absolute inset-0 rounded-full bg-success animate-pulse-dot"
+                  ></span>
                 </span>
                 Faol
               </p>
@@ -135,79 +158,132 @@ function confirmLogout() {
 
           <div class="space-y-4">
             <div>
-              <label class="mb-1 block text-xs font-medium text-muted">Biznes nomi</label>
-              <input v-model="profile.name" type="text" :disabled="loading"
-                class="h-11 w-full rounded-lg border border-transparent bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
+              <label class="mb-1 block text-xs font-medium text-muted"
+                >Biznes nomi</label
+              >
+              <input
+                v-model="profile.name"
+                type="text"
+                :disabled="loading"
+                class="h-11 w-full rounded-lg border border-transparent bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10"
+              />
             </div>
             <div>
-              <label class="mb-1 block text-xs font-medium text-muted">Kategoriya</label>
-              <input :value="categoryName" type="text" disabled
-                class="h-11 w-full cursor-not-allowed rounded-lg border border-transparent bg-input px-3 text-sm text-muted outline-none" />
+              <label class="mb-1 block text-xs font-medium text-muted"
+                >Kategoriya</label
+              >
+              <input
+                :value="categoryName"
+                type="text"
+                disabled
+                class="h-11 w-full cursor-not-allowed rounded-lg border border-transparent bg-input px-3 text-sm text-muted outline-none"
+              />
             </div>
             <div>
-              <label class="mb-1 block text-xs font-medium text-muted">Manzil</label>
-              <input v-model="profile.full_address" type="text" :disabled="loading"
-                class="h-11 w-full rounded-lg border border-transparent bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
+              <label class="mb-1 block text-xs font-medium text-muted"
+                >Manzil</label
+              >
+              <input
+                v-model="profile.full_address"
+                type="text"
+                :disabled="loading"
+                class="h-11 w-full rounded-lg border border-transparent bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10"
+              />
             </div>
             <div class="grid gap-4 sm:grid-cols-2">
               <div>
-                <label class="mb-1 block text-xs font-medium text-muted">Telefon</label>
-                <input v-model="profile.phone_number" type="text" :disabled="loading"
-                  class="h-11 w-full rounded-lg border border-transparent bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
+                <label class="mb-1 block text-xs font-medium text-muted"
+                  >Telefon</label
+                >
+                <input
+                  v-model="profile.phone_number"
+                  type="text"
+                  :disabled="loading"
+                  class="h-11 w-full rounded-lg border border-transparent bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10"
+                />
               </div>
               <div>
-                <label class="mb-1 block text-xs font-medium text-muted">Email</label>
-                <input v-model="profile.email" type="text" :disabled="loading"
-                  class="h-11 w-full rounded-lg border border-transparent bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
+                <label class="mb-1 block text-xs font-medium text-muted"
+                  >Email</label
+                >
+                <input
+                  v-model="profile.email"
+                  type="text"
+                  :disabled="loading"
+                  class="h-11 w-full rounded-lg border border-transparent bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10"
+                />
               </div>
             </div>
             <div>
-              <label class="mb-1 block text-xs font-medium text-muted">Tavsif</label>
-              <textarea v-model="profile.description" rows="3" :disabled="loading"
-                class="w-full resize-none rounded-lg border border-transparent bg-input px-3 py-2.5 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10"></textarea>
+              <label class="mb-1 block text-xs font-medium text-muted"
+                >Tavsif</label
+              >
+              <textarea
+                v-model="profile.description"
+                rows="3"
+                :disabled="loading"
+                class="w-full resize-none rounded-lg border border-transparent bg-input px-3 py-2.5 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10"
+              ></textarea>
             </div>
           </div>
         </AppCard>
 
         <!-- RIGHT: side cards -->
         <div class="space-y-4">
-          <AppCard class="p-6 transition-all duration-200 hover:shadow-lg rise" style="animation-delay: 0.12s">
+          <AppCard
+            class="p-6 transition-all duration-200 hover:shadow-lg rise"
+            style="animation-delay: 0.12s"
+          >
             <h3 class="mb-3 text-sm font-semibold">Statistika</h3>
             <div class="flex items-center justify-between py-2 text-sm">
               <span class="text-muted">Mijozlar soni (jami)</span>
-              <span class="font-semibold tabular-nums">{{ fmt(stats.customers) }}</span>
+              <span class="font-semibold tabular-nums">{{
+                fmt(stats.customers)
+              }}</span>
             </div>
             <div class="h-px bg-border"></div>
             <div class="flex items-center justify-between py-2 text-sm">
               <span class="text-muted">Kassirlar soni</span>
-              <span class="font-semibold tabular-nums">{{ fmt(cashiersCount) }}</span>
+              <span class="font-semibold tabular-nums">{{
+                fmt(cashiersCount)
+              }}</span>
             </div>
             <div class="h-px bg-border"></div>
             <div class="flex items-center justify-between py-2 text-sm">
               <span class="text-muted">Bugungi daromad</span>
-              <span class="font-semibold tabular-nums text-success">{{ fmt(stats.todayRevenue) }} so'm</span>
+              <span class="font-semibold tabular-nums text-success"
+                >{{ fmt(stats.todayRevenue) }} so'm</span
+              >
             </div>
             <div class="h-px bg-border"></div>
             <div class="flex items-center justify-between py-2 text-sm">
               <span class="text-muted">Joriy chegirma foizi</span>
-              <span class="font-semibold tabular-nums">{{ stats.activePercent }}%</span>
+              <span class="font-semibold tabular-nums"
+                >{{ stats.activePercent }}%</span
+              >
             </div>
           </AppCard>
 
-          <AppCard class="p-6 transition-all duration-200 hover:shadow-lg rise" style="animation-delay: 0.19s">
+          <AppCard
+            class="p-6 transition-all duration-200 hover:shadow-lg rise"
+            style="animation-delay: 0.19s"
+          >
             <h3 class="mb-2 text-sm font-semibold">Yordam</h3>
             <p class="mb-4 text-sm text-muted">
-              Agar sizga texnik yordam kerak bo'lsa, qo'llab-quvvatlash jamoamizga murojaat qiling.
+              Agar sizga texnik yordam kerak bo'lsa, qo'llab-quvvatlash
+              jamoamizga murojaat qiling.
             </p>
 
             <button
-              class="mb-2 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md active:scale-95">
+              class="mb-2 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md active:scale-95"
+            >
               📞 Bog'lanish
             </button>
 
             <button
               class="flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm font-medium text-destructive transition-all duration-150 hover:bg-red-50 active:scale-95"
-              @click="showLogoutModal = true">
+              @click="showLogoutModal = true"
+            >
               ↪ Chiqish
             </button>
           </AppCard>
@@ -215,25 +291,41 @@ function confirmLogout() {
       </div>
     </div>
 
-    <AppModal :open="showLogoutModal" title="Tizimdan chiqish" @close="showLogoutModal = false">
+    <AppModal
+      :open="showLogoutModal"
+      title="Tizimdan chiqish"
+      @close="showLogoutModal = false"
+    >
       <div class="flex flex-col items-center gap-3 py-2 text-center">
-        <div class="flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-2xl">
+        <div
+          class="flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-2xl"
+        >
           🔌
         </div>
-        <h3 class="text-base font-semibold">Siz tizimdan chiqishni xohlaysizmi?</h3>
-        <p class="text-sm text-muted">Agar davom etsangiz, siz qayta tizimga kirishingiz kerak bo'ladi.</p>
+        <h3 class="text-base font-semibold">
+          Siz tizimdan chiqishni xohlaysizmi?
+        </h3>
+        <p class="text-sm text-muted">
+          Agar davom etsangiz, siz qayta tizimga kirishingiz kerak bo'ladi.
+        </p>
       </div>
       <div class="mt-4 flex justify-end gap-2">
         <button
           class="rounded-full border border-border px-4 py-2 text-sm transition-colors duration-150 hover:bg-secondary"
-          :disabled="loggingOut" @click="showLogoutModal = false">
+          :disabled="loggingOut"
+          @click="showLogoutModal = false"
+        >
           Orqaga
         </button>
         <button
           class="rounded-full bg-destructive px-4 py-2 text-sm text-white transition-all duration-150 hover:bg-destructive/90 active:scale-95 disabled:opacity-60"
-          :disabled="loggingOut" @click="confirmLogout">
-          <span v-if="loggingOut"
-            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white align-middle"></span>
+          :disabled="loggingOut"
+          @click="confirmLogout"
+        >
+          <span
+            v-if="loggingOut"
+            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white align-middle"
+          ></span>
           <span v-else>Chiqish</span>
         </button>
       </div>
@@ -272,7 +364,12 @@ function confirmLogout() {
 }
 
 .ring-glow {
-  background: conic-gradient(from 0deg, var(--primary, #22c55e), transparent 65%, var(--primary, #22c55e));
+  background: conic-gradient(
+    from 0deg,
+    var(--primary, #22c55e),
+    transparent 65%,
+    var(--primary, #22c55e)
+  );
   animation: spinSlow 6s linear infinite;
 }
 
@@ -299,7 +396,6 @@ function confirmLogout() {
 }
 
 @media (prefers-reduced-motion: reduce) {
-
   .page-enter,
   .rise,
   .ring-glow,

@@ -46,6 +46,17 @@ function itemDelay(item) {
   return `${idx * 60}ms`;
 }
 
+// mobil pastki menyu — barcha bo'limlar (desktop sidebardagi kabi to'liq)
+const mobileItems = [
+  { to: "/asosiy", label: "Asosiy", icon: "home" },
+  { to: "/statistika", label: "Statistika", icon: "chart" },
+  { to: "/chegirmalar", label: "Chegirma", icon: "tag" },
+  { to: "/chegirma-tarixi", label: "Tarix", icon: "history" },
+  { to: "/kassirlar", label: "Kassirlar", icon: "users" },
+  { to: "/bildirishnomalar", label: "Bildirishnoma", icon: "bell" },
+  { to: "/profil", label: "Profil", icon: "card" },
+];
+
 // --- SVG ikonalar (lucide uslubida, stroke asosida) ---
 const ICONS = {
   home: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/>',
@@ -247,44 +258,91 @@ const ICONS = {
 
     <!-- Mobile top bar -->
     <div
-      class="fixed inset-x-0 top-0 z-30 flex items-center justify-between bg-sidebar px-4 py-3 text-white md:hidden"
+      class="fixed inset-x-0 top-0 z-30 flex items-center justify-between gap-2 bg-sidebar px-3 py-2.5 text-white md:hidden"
     >
-      <span class="text-lg font-semibold">savin</span>
+      <div class="flex items-center gap-1.5">
+        <img src="../images/Vector.png" alt="S" class="h-5 w-5 shrink-0" />
+        <span
+          class="whitespace-nowrap text-lg font-semibold text-[rgba(137,234,92,1)]"
+          >savin</span
+        >
+      </div>
+
       <RouterLink
         to="/profil"
-        class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold"
+        class="flex min-w-0 items-center gap-2 rounded-full bg-sidebar-accent py-1 pl-1 pr-2.5"
       >
-        {{ authStore.initials }}
-      </RouterLink>
-    </div>
-    <nav
-      class="fixed inset-x-0 bottom-0 z-30 flex justify-around border-t bg-white py-2 md:hidden"
-    >
-      <RouterLink
-        v-for="item in flatItems"
-        :key="item.to"
-        :to="item.to"
-        class="flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] transition-colors"
-        :class="
-          route.path === item.to ? 'text-primary font-semibold' : 'text-muted'
-        "
-      >
+        <span
+          class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground"
+        >
+          {{ authStore.initials }}
+        </span>
+        <span class="truncate text-xs font-medium">{{ businessName }}</span>
         <svg
           viewBox="0 0 24 24"
-          class="h-4 w-4"
+          class="h-3.5 w-3.5 shrink-0 text-white/40"
           fill="none"
           stroke="currentColor"
-          stroke-width="1.8"
+          stroke-width="2"
           stroke-linecap="round"
           stroke-linejoin="round"
-          v-html="ICONS[item.icon]"
+          v-html="ICONS.chevron"
         ></svg>
-        {{ item.label }}
       </RouterLink>
+    </div>
+
+    <!-- Mobile bottom nav: iOS uslubidagi suzuvchi pill menyu -->
+    <nav
+      class="fixed inset-x-0 bottom-0 z-30 flex justify-center px-3 pb-[calc(env(safe-area-inset-bottom)+12px)] md:hidden"
+    >
+      <div
+        class="no-scrollbar flex w-full max-w-md items-center gap-0.5 overflow-x-auto rounded-[28px] border border-white/10 bg-sidebar/90 px-1.5 py-2 shadow-[0_8px_30px_rgba(0,0,0,0.25)] backdrop-blur-xl"
+      >
+        <RouterLink
+          v-for="item in mobileItems"
+          :key="item.to"
+          :to="item.to"
+          class="relative flex shrink-0 basis-0 flex-1 flex-col items-center justify-end gap-0.5 py-1 text-[9px] font-medium leading-none transition-colors"
+          :class="
+            route.path === item.to
+              ? 'text-white'
+              : 'text-white/50 hover:text-white/80'
+          "
+        >
+          <span
+            class="flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300 ease-out"
+            :class="
+              route.path === item.to
+                ? '-translate-y-2.5 bg-primary shadow-[0_6px_16px_rgba(137,234,92,0.45)]'
+                : 'translate-y-0 bg-transparent'
+            "
+          >
+            <svg
+              viewBox="0 0 24 24"
+              class="h-4 w-4 shrink-0"
+              fill="none"
+              :stroke="route.path === item.to ? '#0f1f10' : 'currentColor'"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              v-html="ICONS[item.icon]"
+            ></svg>
+          </span>
+          <span
+            class="whitespace-nowrap transition-all duration-300"
+            :class="
+              route.path === item.to
+                ? '-translate-y-2.5 opacity-100'
+                : 'translate-y-0 opacity-80'
+            "
+            >{{ item.label }}</span
+          >
+        </RouterLink>
+      </div>
     </nav>
 
     <main
-      class="flex-1 pb-20 pt-16 transition-[margin] duration-300 ease-in-out md:pb-0 md:pt-0"
+      class="flex-1 pb-28 pt-16 transition-[margin] duration-300 ease-in-out md:pb-0 md:pt-0"
       :class="collapsed ? 'md:ml-[76px]' : 'md:ml-64'"
     >
       <div class="mx-auto max-w-7xl p-4 md:p-6">
@@ -346,6 +404,16 @@ const ICONS = {
 .label-fade-leave-to {
   opacity: 0;
   transform: translateX(-4px);
+}
+
+/* Mobil pastki menyudagi gorizontal skrollni ko'zga ko'rinmas qilish */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

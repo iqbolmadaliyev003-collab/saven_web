@@ -11,7 +11,13 @@ function fmt(n) {
   return Number(n || 0).toLocaleString("ru-RU");
 }
 function fmtDate(d) {
-  return new Date(d).toLocaleString("uz-UZ", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  return new Date(d).toLocaleString("uz-UZ", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 // Backend'da mijoz uchun "to'langan summa" alohida saqlanmaydi — asl narx (purchase_amount)
 // va chegirma summasi (discount_amount) orqali hisoblanadi.
@@ -44,7 +50,9 @@ async function load() {
 }
 onMounted(load);
 
-const cashierOptions = computed(() => [...new Set(all.value.map((r) => r.cashier_name).filter(Boolean))]);
+const cashierOptions = computed(() => [
+  ...new Set(all.value.map((r) => r.cashier_name).filter(Boolean)),
+]);
 
 const activeFilterCount = computed(() => {
   let n = 0;
@@ -79,18 +87,26 @@ const filtered = computed(() => {
     rows = rows.filter(
       (r) =>
         (r.customer_email || "").toLowerCase().includes(s) ||
-        (r.cashier_name || "").toLowerCase().includes(s)
+        (r.cashier_name || "").toLowerCase().includes(s),
     );
   }
-  if (dateFrom.value) rows = rows.filter((r) => new Date(r.used_at) >= new Date(dateFrom.value));
-  if (dateTo.value) rows = rows.filter((r) => new Date(r.used_at) <= new Date(dateTo.value));
-  if (selectedCashiers.value.length) rows = rows.filter((r) => selectedCashiers.value.includes(r.cashier_name));
-  if (percentFilter.value) rows = rows.filter((r) => r.applied_percent === percentFilter.value);
+  if (dateFrom.value)
+    rows = rows.filter((r) => new Date(r.used_at) >= new Date(dateFrom.value));
+  if (dateTo.value)
+    rows = rows.filter((r) => new Date(r.used_at) <= new Date(dateTo.value));
+  if (selectedCashiers.value.length)
+    rows = rows.filter((r) => selectedCashiers.value.includes(r.cashier_name));
+  if (percentFilter.value)
+    rows = rows.filter((r) => r.applied_percent === percentFilter.value);
   return rows;
 });
 
-const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize)));
-const paged = computed(() => filtered.value.slice((page.value - 1) * pageSize, page.value * pageSize));
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(filtered.value.length / pageSize)),
+);
+const paged = computed(() =>
+  filtered.value.slice((page.value - 1) * pageSize, page.value * pageSize),
+);
 
 function nextPage() {
   if (page.value < totalPages.value) page.value++;
@@ -137,83 +153,134 @@ async function exportCsv() {
         <div class="mb-4 flex flex-wrap items-center gap-2">
           <div class="relative min-w-[200px] flex-1 group">
             <span
-              class="absolute left-3 top-1/2 -translate-y-1/2 text-muted transition-transform duration-200 group-focus-within:scale-110">🔍</span>
-            <input v-model="q" placeholder="Mijoz yoki kassir bo'yicha qidirish"
-              class="h-10 w-full rounded-full border border-transparent bg-input pl-9 pr-3 text-sm outline-none transition-all duration-200 focus:border-primary/40 focus:ring-4 focus:ring-primary/15" />
+              class="absolute left-3 top-1/2 -translate-y-1/2 text-muted transition-transform duration-200 group-focus-within:scale-110"
+              >🔍</span
+            >
+            <input
+              v-model="q"
+              placeholder="Mijoz yoki kassir bo'yicha qidirish"
+              class="h-10 w-full rounded-full border border-transparent bg-input pl-9 pr-3 text-sm outline-none transition-all duration-200 focus:border-primary/40 focus:ring-4 focus:ring-primary/15"
+            />
           </div>
 
           <div class="relative">
             <button
               class="relative flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium transition-all duration-200 hover:border-primary/40 hover:bg-secondary active:scale-95"
-              :class="filterOpen ? 'border-primary/50 bg-secondary' : ''" @click="filterOpen = !filterOpen">
+              :class="filterOpen ? 'border-primary/50 bg-secondary' : ''"
+              @click="filterOpen = !filterOpen"
+            >
               Filtr
-              <span class="inline-block transition-transform duration-300"
-                :class="filterOpen ? 'rotate-180' : 'rotate-0'">▾</span>
-              <span v-if="activeFilterCount"
-                class="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground animate-pop">
+              <span
+                class="inline-block transition-transform duration-300"
+                :class="filterOpen ? 'rotate-180' : 'rotate-0'"
+                >▾</span
+              >
+              <span
+                v-if="activeFilterCount"
+                class="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground animate-pop"
+              >
                 {{ activeFilterCount }}
               </span>
             </button>
 
             <Transition name="dropdown">
-              <div v-if="filterOpen"
-                class="absolute right-0 z-20 mt-2 w-72 origin-top-right rounded-2xl border border-border bg-card p-4 shadow-xl">
+              <div
+                v-if="filterOpen"
+                class="absolute right-0 z-25 mt-2 w-72 origin-top-right rounded-2xl border border-border bg-card p-4 shadow-xl"
+              >
                 <div class="mb-3 flex items-center justify-between">
                   <p class="text-sm font-semibold">Filtr</p>
-                  <button type="button" class="text-xs text-muted transition-colors duration-150 hover:text-gray-900"
-                    @click="clearFilters">
+                  <button
+                    type="button"
+                    class="text-xs text-muted transition-colors duration-150 hover:text-gray-900"
+                    @click="clearFilters"
+                  >
                     Filtrni tozalash
                   </button>
                 </div>
 
-                <label class="mb-1 block text-xs text-muted">Sana oralig'i</label>
-                <div class="mb-3 flex items-center gap-2">
-                  <input v-model="dateFrom" type="date"
-                    class="h-9 w-full rounded-lg border border-border bg-input px-2 text-xs transition-colors duration-150 focus:border-primary/50 focus:outline-none" />
+                <label class="mb-1 block text-xs text-muted"
+                  >Sana oralig'i</label
+                >
+                <div class="mb-5 flex items-center gap-2">
+                  <input
+                    v-model="dateFrom"
+                    type="date"
+                    class="h-9 w-full rounded-lg border border-border bg-input px-2 text-xs transition-colors duration-150 focus:border-primary/50 focus:outline-none"
+                  />
                   <span class="text-muted">—</span>
-                  <input v-model="dateTo" type="date"
-                    class="h-9 w-full rounded-lg border border-border bg-input px-2 text-xs transition-colors duration-150 focus:border-primary/50 focus:outline-none" />
+                  <input
+                    v-model="dateTo"
+                    type="date"
+                    class="h-9 w-full rounded-lg border border-border bg-input text-xs transition-colors duration-150 focus:border-primary/50 focus:outline-none"
+                  />
                 </div>
 
                 <label class="mb-1 block text-xs text-muted">Kassir</label>
                 <div class="mb-3 space-y-1 max-h-32 overflow-y-auto pr-1">
-                  <label v-for="c in cashierOptions" :key="c"
-                    class="flex cursor-pointer items-center gap-2 rounded-lg px-1.5 py-1 text-sm transition-colors duration-150 hover:bg-secondary">
-                    <input type="checkbox"
+                  <label
+                    v-for="c in cashierOptions"
+                    :key="c"
+                    class="flex cursor-pointer items-center gap-2 rounded-lg px-1.5 py-1 text-sm transition-colors duration-150 hover:bg-secondary"
+                  >
+                    <input
+                      type="checkbox"
                       class="h-4 w-4 accent-primary transition-transform duration-150 checked:scale-110"
-                      :checked="selectedCashiers.includes(c)" @change="toggleCashier(c)" />
+                      :checked="selectedCashiers.includes(c)"
+                      @change="toggleCashier(c)"
+                    />
                     {{ c }}
                   </label>
-                  <p v-if="!cashierOptions.length" class="text-xs text-muted">Kassirlar topilmadi</p>
+                  <p v-if="!cashierOptions.length" class="text-xs text-muted">
+                    Kassirlar topilmadi
+                  </p>
                 </div>
 
-                <label class="mb-1 block text-xs text-muted">Chegirma foizi</label>
+                <label class="mb-1 block text-xs text-muted"
+                  >Chegirma foizi</label
+                >
                 <div class="mb-4 flex gap-2">
-                  <button v-for="p in [5, 10, 15]" :key="p" type="button"
+                  <button
+                    v-for="p in [5, 10, 15]"
+                    :key="p"
+                    type="button"
                     class="flex-1 rounded-lg border px-2 py-1.5 text-sm font-medium transition-all duration-150 active:scale-95"
-                    :class="percentFilter === p ? 'border-primary bg-accent text-accent-foreground' : 'border-border hover:bg-secondary'"
-                    @click="percentFilter = percentFilter === p ? null : p">
+                    :class="
+                      percentFilter === p
+                        ? 'border-primary bg-accent text-accent-foreground'
+                        : 'border-border hover:bg-secondary'
+                    "
+                    @click="percentFilter = percentFilter === p ? null : p"
+                  >
                     {{ p }}%
                   </button>
                 </div>
 
                 <button
                   class="h-10 w-full rounded-full bg-primary text-sm font-semibold text-primary-foreground transition-all duration-150 hover:bg-primary/90 hover:shadow-md active:scale-[0.98]"
-                  @click="applyFilters">
+                  @click="applyFilters"
+                >
                   Qo'llash
                 </button>
               </div>
             </Transition>
           </div>
 
-          <button :disabled="exporting"
+          <button
+            :disabled="exporting"
             class="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md active:scale-95 disabled:opacity-60"
-            @click="exportCsv">
-            <span class="transition-transform duration-200 group-hover:-translate-y-0.5">⬇</span>
+            @click="exportCsv"
+          >
+            <span
+              class="transition-transform duration-200 group-hover:-translate-y-0.5"
+              >⬇</span
+            >
             {{ exporting ? "Yuklanmoqda..." : "Yuklash" }}
           </button>
 
-          <span class="text-xs text-muted transition-opacity duration-300">{{ filtered.length }} ta natija</span>
+          <span class="text-xs text-muted transition-opacity duration-300"
+            >{{ filtered.length }} ta natija</span
+          >
         </div>
 
         <div class="overflow-x-auto">
@@ -231,28 +298,40 @@ async function exportCsv() {
 
             <!-- Loading skeleton -->
             <tbody v-if="loading">
-              <tr v-for="i in 6" :key="'sk' + i" class="border-b last:border-none">
+              <tr
+                v-for="i in 6"
+                :key="'sk' + i"
+                class="border-b last:border-none"
+              >
                 <td class="py-3" colspan="6">
-                  <div class="h-4 w-full animate-pulse rounded bg-secondary" :style="{ animationDelay: i * 60 + 'ms' }">
-                  </div>
+                  <div
+                    class="h-4 w-full animate-pulse rounded bg-secondary"
+                    :style="{ animationDelay: i * 60 + 'ms' }"
+                  ></div>
                 </td>
               </tr>
             </tbody>
 
             <TransitionGroup v-else tag="tbody" name="row" appear>
-              <tr v-for="(r, i) in paged" :key="r.id"
+              <tr
+                v-for="(r, i) in paged"
+                :key="r.id"
                 class="group border-b transition-colors duration-150 last:border-none hover:bg-secondary/60"
-                :style="{ transitionDelay: (i * 25) + 'ms' }">
+                :style="{ transitionDelay: i * 25 + 'ms' }"
+              >
                 <td class="py-3 text-muted">{{ fmtDate(r.used_at) }}</td>
                 <td class="font-medium">{{ r.customer_email || "—" }}</td>
                 <td class="text-muted">{{ r.cashier_name || "—" }}</td>
                 <td>
                   <span
-                    class="inline-block rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground transition-transform duration-150 group-hover:scale-105">
+                    class="inline-block rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground transition-transform duration-150 group-hover:scale-105"
+                  >
                     {{ r.applied_percent }}%
                   </span>
                 </td>
-                <td class="text-muted line-through">{{ fmt(r.purchase_amount) }}</td>
+                <td class="text-muted line-through">
+                  {{ fmt(r.purchase_amount) }}
+                </td>
                 <td class="font-semibold">{{ fmt(finalPrice(r)) }} so'm</td>
               </tr>
             </TransitionGroup>
@@ -270,20 +349,29 @@ async function exportCsv() {
           </table>
         </div>
 
-        <div v-if="filtered.length" class="mt-4 flex items-center justify-between text-sm">
+        <div
+          v-if="filtered.length"
+          class="mt-4 flex items-center justify-between text-sm"
+        >
           <span class="text-muted">Natija {{ filtered.length }} dan</span>
           <div class="flex items-center gap-3">
             <button
               class="rounded-full border border-border px-3 py-1.5 transition-all duration-150 hover:bg-secondary active:scale-90 disabled:opacity-40 disabled:hover:bg-transparent"
-              :disabled="page === 1" @click="prevPage">
+              :disabled="page === 1"
+              @click="prevPage"
+            >
               ‹
             </button>
             <button
               class="rounded-full bg-primary px-4 py-1.5 font-medium text-primary-foreground shadow-sm transition-all duration-150 hover:bg-primary/90 hover:shadow-md active:scale-95 disabled:opacity-60 disabled:hover:shadow-none"
-              :disabled="page === totalPages" @click="nextPage">
+              :disabled="page === totalPages"
+              @click="nextPage"
+            >
               Keyingi ›
             </button>
-            <span class="text-muted transition-all duration-200">Sahifa {{ page }} / {{ totalPages }}</span>
+            <span class="text-muted transition-all duration-200"
+              >Sahifa {{ page }} / {{ totalPages }}</span
+            >
           </div>
         </div>
       </AppCard>
@@ -309,11 +397,15 @@ async function exportCsv() {
 }
 
 .dropdown-enter-active {
-  transition: opacity 0.18s ease-out, transform 0.18s ease-out;
+  transition:
+    opacity 0.18s ease-out,
+    transform 0.18s ease-out;
 }
 
 .dropdown-leave-active {
-  transition: opacity 0.12s ease-in, transform 0.12s ease-in;
+  transition:
+    opacity 0.12s ease-in,
+    transform 0.12s ease-in;
 }
 
 .dropdown-enter-from,
@@ -323,7 +415,9 @@ async function exportCsv() {
 }
 
 .row-enter-active {
-  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+  transition:
+    opacity 0.3s ease-out,
+    transform 0.3s ease-out;
 }
 
 .row-enter-from {
@@ -370,7 +464,6 @@ async function exportCsv() {
 }
 
 @media (prefers-reduced-motion: reduce) {
-
   .page-enter,
   .animate-pop,
   .fade-in-up,
