@@ -102,46 +102,46 @@ function homeFor(role) {
   return role === "cashier" ? "/kassir/dashboard" : "/asosiy";
 }
 
-router.beforeEach(async (to) => {
-  const authStore = useAuthStore();
-  const isAuthenticated = authStore.isAuthenticated;
+// router.beforeEach(async (to) => {
+//   const authStore = useAuthStore();
+//   const isAuthenticated = authStore.isAuthenticated;
 
-  // Token bor, lekin sahifa yangilangani uchun user hali aniqlanmagan bo'lishi mumkin.
-  if (isAuthenticated && !authStore.user) {
-    try {
-      await authStore.ensureUser();
-    } catch {
-      authStore.logout();
-      return { path: "/login" };
-    }
-  }
+//   // Token bor, lekin sahifa yangilangani uchun user hali aniqlanmagan bo'lishi mumkin.
+//   if (isAuthenticated && !authStore.user) {
+//     try {
+//       await authStore.ensureUser();
+//     } catch {
+//       authStore.logout();
+//       return { path: "/login" };
+//     }
+//   }
 
-  const role = authStore.user?.role;
+//   const role = authStore.user?.role;
 
-  if (to.path === "/") {
-    return { path: isAuthenticated ? homeFor(role) : "/login" };
-  }
+//   if (to.path === "/") {
+//     return { path: isAuthenticated ? homeFor(role) : "/login" };
+//   }
 
-  if (!to.meta.public && !isAuthenticated) {
-    return { path: "/login" };
-  }
+//   if (!to.meta.public && !isAuthenticated) {
+//     return { path: "/login" };
+//   }
 
-  if (to.path === "/login" && isAuthenticated) {
-    return { path: homeFor(role) };
-  }
+//   if (to.path === "/login" && isAuthenticated) {
+//     return { path: homeFor(role) };
+//   }
 
-  // Rol bo'yicha himoya: biznes egasi kassir sahifalariga, kassir esa biznes
-  // egasi sahifalariga kira olmaydi.
-  if (
-    to.meta.roles &&
-    isAuthenticated &&
-    role &&
-    !to.meta.roles.includes(role)
-  ) {
-    return { path: homeFor(role) };
-  }
+//   // Rol bo'yicha himoya: biznes egasi kassir sahifalariga, kassir esa biznes
+//   // egasi sahifalariga kira olmaydi.
+//   if (
+//     to.meta.roles &&
+//     isAuthenticated &&
+//     role &&
+//     !to.meta.roles.includes(role)
+//   ) {
+//     return { path: homeFor(role) };
+//   }
 
-  return true;
-});
+//   return true;
+// });
 
 export default router;

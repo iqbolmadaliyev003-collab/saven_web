@@ -141,17 +141,26 @@ export const meApi = {
 };
 
 // ==================== KASSIR PANELI ====================
-// MUHIM ESLATMA (backend sherikka ko'rsatiladigan ro'yxat):
-// Hozircha backend'da quyidagilar YO'Q, shu sabab pastda "MOCK" deb belgilanган:
-//   1) Kassir uchun alohida Dashboard statistikasi (bugungi tashrif/daromad/oxirgi tashrif)
-//   2) QR kodni serverda tekshirish va mijoz ma'lumotini (ism, a'zolik, tashriflar) qaytarish
-//   3) Mijozning a'zolik turiga qarab farqlanadigan chegirma foizi (hozir foiz butun biznesga bitta)
-//   4) Xizmat turlari (Service) ro'yxati — narxlari bilan
-//   5) Kassirning FAQAT o'ziga tegishli tashriflar tarixi (hozir tarix faqat biznes egasiga ochiq)
+// 2026-07-14 YANGILANDI: backend sherik "transactions" ilovasini ulab qo'ydi
+// (config/urls.py -> transactions.urls, prefiks: api/v1/transactions/).
+// Bu quyidagilarni REAL qildi: tranzaksiya yaratish, kassirning o'z tarixini
+// ko'rish, va dashboard uchun kunlik xulosa (summary/today). Shu sabab
+// pastdagi 3 ta funksiya endi MOCKsiz, to'g'ridan-to'g'ri shu endpointlarga
+// ulanadi (sinovdan o'tkazilgan: POST/GET real serverga ishlab ko'rilgan).
 //
-// Har bir funksiya avval REAL endpointni chaqiradi; agar u hali mavjud bo'lmasa (404/500),
-// UI sinishi/qulashi uchun emas, balki dizaynni sinab ko'rish uchun MOCK ma'lumotga tushadi.
-// Backend tayyor bo'lgach, faqat shu faylni yangilang — boshqa hech qanday joyni o'zgartirish shart emas.
+// HALI HAM YO'Q (backend sherikka aytiladigan qoldiq ro'yxat):
+//   1) QR kodni serverda tekshirish va mijoz ma'lumotini (ism, a'zolik turi,
+//      tashriflar soni, oxirgi tashrif, mijozga xos chegirma %) qaytaradigan
+//      endpoint — hozir Transaction modelida "customer" uchun faqat erkin
+//      matn (customer_name/phone) bor, alohida Customer/Membership modeli yo'q.
+//   2) Xizmat turlari (Service) katalogi — narxlari bilan, biznes egasi
+//      tomonidan boshqariladigan. Transaction.service_name/category — erkin
+//      matn maydonlari, oldindan belgilangan ro'yxat emas.
+//   3. ⚠️ MA'LUM BAG: TransactionListSerializer'dagi "cashier_name" doim
+//      bo'sh qaytadi, chunki u `cashier.get_full_name()`dan olinadi — bu esa
+//      Django'ning standart first_name/last_name'iga qaraydi, lekin haqiqiy
+//      ism `Cashier.full_name` maydonida saqlanadi (boshqa model). Backend
+//      sherikka aytish kerak: serializer shu ikkisini bog'lashi kerak.
 
 const MOCK_SERVICES = [
   { id: "soch-olish", name: "Soch olish", price: 50000 },
@@ -171,58 +180,72 @@ const MOCK_CUSTOMER = {
   discount_percent: 35,
 };
 
-function buildMockDashboard() {
+// Backend Transaction maydonlarini frontend'da ishlatiladigan eski nomlarga
+// moslaymiz (applied_percent, purchase_amount, used_at) — shu bilan
+// TashrifTarixiPage.vue va KassirDashboardPage.vue'ni o'zgartirish shart
+// bo'lmadi.
+function mapTransaction(t) {
   return {
-    today_visits: 5,
-    today_discount_amount: 115750,
-    today_revenue: 447500,
-    last_visit_time: "14:32",
+    id: t.id,
+    customer_name: t.customer_name,
+    service_name: t.service_name,
+    applied_percent: t.discount_percent,
+    purchase_amount: Number(t.base_price),
+    discount_amount: Number(t.discount_amount),
+    used_at: t.created_at,
   };
 }
 
-const MOCK_HISTORY = [
-  {
-    id: "m1",
-    customer_name: "Jasur Abdullayev",
-    service_name: "Soch olish",
-    applied_percent: 35,
-    purchase_amount: 50000,
-    discount_amount: 17500,
-    used_at: new Date().toISOString(),
-  },
-  {
-    id: "m2",
-    customer_name: "Sherzod Karimov",
-    service_name: "Soqol qirish",
-    applied_percent: 30,
-    purchase_amount: 28000,
-    discount_amount: 8400,
-    used_at: new Date().toISOString(),
-  },
-];
-
 export const cashierApi = {
-  // ✅ REAL backend: discounts/urls.py -> POST cashier/apply-discount/
-  // payload: { customer_email?, purchase_amount }
-  // Wizard'dagi qo'shimcha maydonlar (service_name, comment, customer_name) hozircha
-  // backend'da saqlanmaydi, lekin xato bermasin deb baribir yuboriladi (DRF ortiqcha
-  // maydonlarni jim e'tiborsiz qoldiradi).
+  // ✅ REAL backend: transactions/urls.py -> POST transactions/
+  // Kutilgan payload: { customer_name, customer_phone?, service_name,
+  // service_category?, purchase_amount, discount_percent, comment? }
   async applyDiscount(payload) {
-    const { data } = await client.post("cashier/apply-discount/", payload);
+    const { data } = await client.post("transactions/", {
+      customer_name: payload.customer_name || "",
+      customer_phone: payload.customer_phone || "",
+      service_name: payload.service_name || "",
+      service_category: payload.service_category || "",
+      base_price: payload.purchase_amount,
+      discount_percent: payload.discount_percent ?? 0,
+      notes: payload.comment || "",
+    });
     return data;
   },
 
-  // ⚠️ MOCK — real bo'lganda: GET cashier/dashboard/
+  // ✅ REAL backend: transactions/urls.py -> GET transactions/today/
+  // (kassirning o'z biznesiga tegishli, "bugun" bilan filtrlangan).
   async dashboard() {
-    try {
-      const { data } = await client.get("cashier/dashboard/");
-      return data;
-    } catch {
-      return buildMockDashboard();
-    }
+    const { data } = await client.get("transactions/today/", {
+      params: { page_size: 1000 },
+    });
+    const rows = data.results ?? data;
+    const today_visits = rows.length;
+    const today_discount_amount = rows.reduce(
+      (s, r) => s + Number(r.discount_amount || 0),
+      0,
+    );
+    const today_revenue = rows.reduce(
+      (s, r) => s + Number(r.final_price || 0),
+      0,
+    );
+    const last = rows[0]; // ordering=-created_at bo'yicha eng oxirgisi birinchi
+    const last_visit_time = last
+      ? new Date(last.created_at).toLocaleTimeString("uz-UZ", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "-";
+    return {
+      today_visits,
+      today_discount_amount,
+      today_revenue,
+      last_visit_time,
+    };
   },
 
-  // ⚠️ MOCK — real bo'lganda: POST cashier/scan-qr/ { qr_code } -> mijoz ma'lumotlari
+  // ⚠️ MOCK — hali backend'da yo'q: mijozni QR orqali aniqlaydigan endpoint.
+  // Real bo'lganda: POST cashier/scan-qr/ { qr_code } -> mijoz ma'lumotlari.
   async verifyQr(qrCode) {
     try {
       const { data } = await client.post("cashier/scan-qr/", {
@@ -237,23 +260,25 @@ export const cashierApi = {
     }
   },
 
-  // ⚠️ MOCK — real bo'lganda: GET cashier/history/  (search, filtr, pagination bilan)
+  // ✅ REAL backend: transactions/urls.py -> GET transactions/
+  // (qidiruv: customer_name/service_name/customer_phone; ordering; pagination).
   async history(params = {}) {
-    try {
-      const { data } = await client.get("cashier/history/", { params });
-      return data.results ?? data;
-    } catch {
-      return MOCK_HISTORY;
-    }
+    const { data } = await client.get("transactions/", {
+      params: {
+        ordering: "-created_at",
+        page_size: 100,
+        search: params.search,
+        ...params,
+      },
+    });
+    const rows = data.results ?? data;
+    return rows.map(mapTransaction);
   },
 
-  // ⚠️ MOCK — real bo'lganda: GET my-business/services/
+  // ⚠️ MOCK — hali backend'da yo'q: biznes egasi boshqaradigan xizmat
+  // turlari + narxlari katalogi. Hozircha Transaction.service_name erkin
+  // matn, shuning uchun ro'yxat frontend'da qattiq kodlangan.
   async services() {
-    try {
-      const { data } = await client.get("my-business/services/");
-      return data.results ?? data;
-    } catch {
-      return MOCK_SERVICES;
-    }
+    return MOCK_SERVICES;
   },
 };

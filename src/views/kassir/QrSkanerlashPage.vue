@@ -129,8 +129,7 @@ async function confirmTransaction() {
   try {
     const data = await cashierApi.applyDiscount({
       purchase_amount: amount.value,
-      // Quyidagi maydonlar hozircha backend'da saqlanmaydi (MOCK qismga qarang),
-      // lekin UI/hisobot uchun natija obyektida ishlatiladi.
+      discount_percent: customer.value?.discount_percent,
       service_name: selectedServiceName.value,
       comment: comment.value,
       customer_name: customer.value?.full_name,
