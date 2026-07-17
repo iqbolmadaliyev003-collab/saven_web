@@ -148,37 +148,22 @@ export const meApi = {
 // pastdagi 3 ta funksiya endi MOCKsiz, to'g'ridan-to'g'ri shu endpointlarga
 // ulanadi (sinovdan o'tkazilgan: POST/GET real serverga ishlab ko'rilgan).
 //
-// HALI HAM YO'Q (backend sherikka aytiladigan qoldiq ro'yxat):
-//   1) QR kodni serverda tekshirish va mijoz ma'lumotini (ism, a'zolik turi,
-//      tashriflar soni, oxirgi tashrif, mijozga xos chegirma %) qaytaradigan
-//      endpoint — hozir Transaction modelida "customer" uchun faqat erkin
-//      matn (customer_name/phone) bor, alohida Customer/Membership modeli yo'q.
-//   2) Xizmat turlari (Service) katalogi — narxlari bilan, biznes egasi
-//      tomonidan boshqariladigan. Transaction.service_name/category — erkin
-//      matn maydonlari, oldindan belgilangan ro'yxat emas.
-//   3. ⚠️ MA'LUM BAG: TransactionListSerializer'dagi "cashier_name" doim
-//      bo'sh qaytadi, chunki u `cashier.get_full_name()`dan olinadi — bu esa
-//      Django'ning standart first_name/last_name'iga qaraydi, lekin haqiqiy
-//      ism `Cashier.full_name` maydonida saqlanadi (boshqa model). Backend
-//      sherikka aytish kerak: serializer shu ikkisini bog'lashi kerak.
+// 2026-07-17 YANGILANDI: avvalgi "HALI HAM YO'Q" ro'yxatidagi hamma narsa
+// backend'da REAL bo'ldi:
+//   1) POST cashier/scan-qr/ — QR (mijoz ID yoki email) bo'yicha mijozni topib,
+//      to'liq ma'lumot qaytaradi (full_name, membership_type, visits_count,
+//      last_visit_label, discount_percent va h.k.) — MOCK olib tashlandi.
+//   2) GET cashier/services/ — biznesning xizmatlar katalogi (biznes egasi
+//      my-business/services/ orqali boshqaradi). Katalog bo'sh bo'lsa,
+//      standart ro'yxat ko'rsatiladi (UI ishlashda davom etsin deb).
+//   3) cashier_name bagi backend'da tuzatildi (Cashier.full_name'dan olinadi).
 
-const MOCK_SERVICES = [
+const DEFAULT_SERVICES = [
   { id: "soch-olish", name: "Soch olish", price: 50000 },
   { id: "soqol-qirish", name: "Soqol qirish", price: 28000 },
   { id: "soch-soqol", name: "Soch + Soqol", price: 72000 },
   { id: "bola-soch", name: "Bola soch", price: 35000 },
 ];
-
-const MOCK_CUSTOMER = {
-  id: "mock-1",
-  full_name: "Jasur Abdullayev",
-  membership_type: "Premium a'zo",
-  membership_status: "Faol",
-  code: "#123213143",
-  visits_count: 47,
-  last_visit_days_ago: 3,
-  discount_percent: 35,
-};
 
 // Backend Transaction maydonlarini frontend'da ishlatiladigan eski nomlarga
 // moslaymiz (applied_percent, purchase_amount, used_at) — shu bilan
@@ -244,20 +229,15 @@ export const cashierApi = {
     };
   },
 
-  // ⚠️ MOCK — hali backend'da yo'q: mijozni QR orqali aniqlaydigan endpoint.
-  // Real bo'lganda: POST cashier/scan-qr/ { qr_code } -> mijoz ma'lumotlari.
+  // ✅ REAL backend: discounts/urls.py -> POST cashier/scan-qr/ { qr_code }
+  // QR qiymati: mijoz ID (UUID) yoki email. Mijoz topilmasa 404 qaytadi —
+  // sahifa buni ushlab "QR kod tekshirilmadi" deb ko'rsatadi (soxta mijoz
+  // ko'rsatilmaydi).
   async verifyQr(qrCode) {
-    try {
-      const { data } = await client.post("cashier/scan-qr/", {
-        qr_code: qrCode,
-      });
-      return data;
-    } catch {
-      return {
-        ...MOCK_CUSTOMER,
-        code: `#${String(Math.floor(Math.random() * 900000) + 100000)}`,
-      };
-    }
+    const { data } = await client.post("cashier/scan-qr/", {
+      qr_code: qrCode,
+    });
+    return data;
   },
 
   // ✅ REAL backend: transactions/urls.py -> GET transactions/
@@ -275,10 +255,24 @@ export const cashierApi = {
     return rows.map(mapTransaction);
   },
 
-  // ⚠️ MOCK — hali backend'da yo'q: biznes egasi boshqaradigan xizmat
-  // turlari + narxlari katalogi. Hozircha Transaction.service_name erkin
-  // matn, shuning uchun ro'yxat frontend'da qattiq kodlangan.
+  // ✅ REAL backend: businesses/urls.py -> GET cashier/services/
+  // Biznes egasi katalogni my-business/services/ orqali to'ldiradi.
+  // Katalog hali bo'sh bo'lsa (yoki xato bo'lsa) standart ro'yxat qaytadi —
+  // kassir ish jarayoni to'xtab qolmasligi uchun.
   async services() {
-    return MOCK_SERVICES;
+    try {
+      const { data } = await client.get("cashier/services/");
+      const rows = data.results ?? data;
+      if (Array.isArray(rows) && rows.length) {
+        return rows.map((s) => ({
+          id: s.id,
+          name: s.name,
+          price: Number(s.price),
+        }));
+      }
+      return DEFAULT_SERVICES;
+    } catch {
+      return DEFAULT_SERVICES;
+    }
   },
 };

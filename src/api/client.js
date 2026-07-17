@@ -1,9 +1,19 @@
 import axios from "axios";
 
-// Backend prefixi "api/v1/" (config/urls.py). Avval "/api/" edi — shuning uchun
-// hech bir so'rov ishlamayotgan edi.
+// Backend prefixi "api/v1/" (config/urls.py).
+// Lokal dev: vite proxy orqali "/api/v1/" ishlaydi (vite.config.js -> 127.0.0.1:8000).
+// Production (Render): frontend va backend ALOHIDA domenlarda bo'lgani uchun
+// build vaqtida VITE_API_URL env o'rnatilishi kerak, masalan:
+//   VITE_API_URL=https://saven-backend.onrender.com/api/v1/
+function normalizeBase(url) {
+  if (!url) return "/api/v1/";
+  return url.endsWith("/") ? url : `${url}/`;
+}
+
+export const API_BASE = normalizeBase(import.meta.env.VITE_API_URL);
+
 const client = axios.create({
-  baseURL: "/api/v1/",
+  baseURL: API_BASE,
 });
 
 function getTokens() {
@@ -49,7 +59,7 @@ client.interceptors.response.use(
         // Backend'dagi haqiqiy yo'l: users/urls.py -> "auth/token/refresh/"
         refreshing =
           refreshing ||
-          axios.post("/api/v1/auth/token/refresh/", { refresh }).then((res) => {
+          axios.post(`${API_BASE}auth/token/refresh/`, { refresh }).then((res) => {
             setTokens({ access: res.data.access });
             refreshing = null;
             return res.data.access;
