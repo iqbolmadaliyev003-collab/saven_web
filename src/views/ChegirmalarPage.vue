@@ -51,10 +51,11 @@ async function submitRequest() {
   }
 }
 
+// Backend statuslarni kichik harfda qaytaradi (pending/approved/rejected)
 const STATUS_LABEL = {
-  PENDING: "Ko'rib chiqilmoqda",
-  APPROVED: "Tasdiqlangan",
-  REJECTED: "Rad etilgan",
+  pending: "Ko'rib chiqilmoqda",
+  approved: "Tasdiqlangan",
+  rejected: "Rad etilgan",
 };
 </script>
 
