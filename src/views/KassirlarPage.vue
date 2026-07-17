@@ -31,10 +31,17 @@ function resetAddForm() {
 }
 
 function initials(name) {
-  return (name || "?").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+  return (name || "?")
+    .split(" ")
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 }
 
-const activeCount = computed(() => items.value.filter((c) => c.is_active).length);
+const activeCount = computed(
+  () => items.value.filter((c) => c.is_active).length,
+);
 
 async function load() {
   loading.value = true;
@@ -118,12 +125,18 @@ function fmtDate(d) {
           <h1 class="text-xl font-bold tracking-tight">Kassirlar</h1>
           <p class="text-xs text-muted">
             Jami: {{ items.length }} ta kassir /
-            <span class="font-medium text-success">{{ activeCount }} ta Faol</span>
+            <span class="font-medium text-success"
+              >{{ activeCount }} ta Faol</span
+            >
           </p>
         </div>
         <button
-          class="flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md active:scale-95"
-          @click="resetAddForm(); addOpen = true">
+          class="flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md active:scale-95"
+          @click="
+            resetAddForm();
+            addOpen = true;
+          "
+        >
           <span class="text-base leading-none">+</span> Qo'shish
         </button>
       </AppCard>
@@ -144,139 +157,224 @@ function fmtDate(d) {
         </AppCard>
       </div>
 
-      <TransitionGroup v-else tag="div" name="card" class="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-        <AppCard v-for="(c, i) in items" :key="c.id"
+      <TransitionGroup
+        v-else
+        tag="div"
+        name="card"
+        class="grid gap-3 md:grid-cols-2 lg:grid-cols-3"
+      >
+        <AppCard
+          v-for="(c, i) in items"
+          :key="c.id"
           class="group p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
-          :style="{ transitionDelay: (i % 6) * 20 + 'ms' }">
+          :style="{ transitionDelay: (i % 6) * 20 + 'ms' }"
+        >
           <div class="mb-3 flex items-start justify-between">
             <div class="flex items-center gap-2">
               <span
-                class="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-sm font-semibold text-accent-foreground transition-transform duration-200 group-hover:scale-105">
+                class="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-sm font-semibold text-accent-foreground transition-transform duration-200 group-hover:scale-105"
+              >
                 {{ initials(c.full_name) }}
               </span>
               <div>
                 <p class="font-semibold leading-tight">{{ c.full_name }}</p>
-                <p class="text-xs text-muted">Qo'shilgan: {{ fmtDate(c.added_at) }}</p>
+                <p class="text-xs text-muted">
+                  Qo'shilgan: {{ fmtDate(c.added_at) }}
+                </p>
               </div>
             </div>
             <span class="flex items-center text-xs font-medium">
-              <span class="mr-1 inline-block h-2 w-2 rounded-full"
-                :class="c.is_active ? 'bg-success animate-pulse-dot' : 'bg-muted'"></span>
+              <span
+                class="mr-1 inline-block h-2 w-2 rounded-full"
+                :class="
+                  c.is_active ? 'bg-success animate-pulse-dot' : 'bg-muted'
+                "
+              ></span>
               {{ c.is_active ? "Faol" : "Nofaol" }}
             </span>
           </div>
 
-          <div class="mb-3 flex items-center justify-between rounded-lg bg-secondary/60 px-3 py-2 text-xs">
+          <div
+            class="mb-3 flex items-center justify-between rounded-lg bg-secondary/60 px-3 py-2 text-xs"
+          >
             <span class="text-muted">Holati</span>
             <label class="relative inline-flex cursor-pointer items-center">
-              <input type="checkbox" class="peer sr-only" :checked="c.is_active" @change="toggleActive(c)" />
-              <div class="h-5 w-9 rounded-full bg-muted/40 transition-colors duration-200 peer-checked:bg-success">
-              </div>
+              <input
+                type="checkbox"
+                class="peer sr-only"
+                :checked="c.is_active"
+                @change="toggleActive(c)"
+              />
               <div
-                class="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 peer-checked:translate-x-4">
-              </div>
+                class="h-5 w-9 rounded-full bg-muted/40 transition-colors duration-200 peer-checked:bg-success"
+              ></div>
+              <div
+                class="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 peer-checked:translate-x-4"
+              ></div>
             </label>
           </div>
 
           <div class="flex gap-2">
             <button
               class="flex flex-1 items-center justify-center gap-1 rounded-full border border-border py-2 text-sm font-medium transition-all duration-150 hover:bg-secondary active:scale-95"
-              @click="openEdit(c)">
+              @click="openEdit(c)"
+            >
               ✎ Tahrirlash
             </button>
             <button
               class="flex flex-1 items-center justify-center gap-1 rounded-full border border-destructive/30 py-2 text-sm font-medium text-destructive transition-all duration-150 hover:bg-red-50 active:scale-95"
-              @click="deleteItem = c">
+              @click="deleteItem = c"
+            >
               🗑 O'chirish
             </button>
           </div>
         </AppCard>
       </TransitionGroup>
 
-      <p v-if="!loading && !items.length" class="col-span-full py-12 text-center text-muted fade-in-up">
+      <p
+        v-if="!loading && !items.length"
+        class="col-span-full py-12 text-center text-muted fade-in-up"
+      >
         Hozircha kassir yo'q
       </p>
     </div>
 
-    <AppModal :open="addOpen" title="Yangi kassir qo'shish" @close="addOpen = false">
+    <AppModal
+      :open="addOpen"
+      title="Yangi kassir qo'shish"
+      @close="addOpen = false"
+    >
       <form class="space-y-3" @submit.prevent="submitAdd">
         <div>
           <label class="text-sm font-medium">Ism familiya</label>
-          <input v-model="addForm.full_name" required placeholder="Ism familiya"
-            class="mt-1 h-11 w-full rounded-lg border border-border bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
+          <input
+            v-model="addForm.full_name"
+            required
+            placeholder="Ism familiya"
+            class="mt-1 h-11 w-full rounded-lg border border-border bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10"
+          />
         </div>
         <div>
-          <label class="text-sm font-medium">Email (login sifatida ishlatiladi)</label>
-          <input v-model="addForm.email" type="email" required placeholder="kassir@biznes.uz"
-            class="mt-1 h-11 w-full rounded-lg border border-border bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
+          <label class="text-sm font-medium"
+            >Email (login sifatida ishlatiladi)</label
+          >
+          <input
+            v-model="addForm.email"
+            type="email"
+            required
+            placeholder="kassir@biznes.uz"
+            class="mt-1 h-11 w-full rounded-lg border border-border bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10"
+          />
         </div>
         <div>
           <label class="text-sm font-medium">Parol</label>
-          <input v-model="addForm.password" type="password" required placeholder="Parol"
-            class="mt-1 h-11 w-full rounded-lg border border-border bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
+          <input
+            v-model="addForm.password"
+            type="password"
+            required
+            placeholder="Parol"
+            class="mt-1 h-11 w-full rounded-lg border border-border bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10"
+          />
         </div>
         <p class="text-xs text-muted">
-          Parolni keyinchalik bu paneldan ko'rish yoki o'zgartirish mumkin emas — uni kassirga
-          xabar qiling.
+          Parolni keyinchalik bu paneldan ko'rish yoki o'zgartirish mumkin emas
+          — uni kassirga xabar qiling.
         </p>
         <div class="flex gap-2 pt-1">
-          <button type="button"
+          <button
+            type="button"
             class="h-11 flex-1 rounded-full border border-border text-sm font-medium transition-colors duration-150 hover:bg-secondary"
-            @click="addOpen = false">
+            @click="addOpen = false"
+          >
             Bekor qilish
           </button>
-          <button type="submit" :disabled="savingAdd"
-            class="h-11 flex-1 rounded-full bg-primary text-sm font-semibold text-primary-foreground transition-all duration-150 hover:bg-primary/90 active:scale-95 disabled:opacity-60">
-            <span v-if="savingAdd"
-              class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground align-middle"></span>
+          <button
+            type="submit"
+            :disabled="savingAdd"
+            class="h-11 flex-1 rounded-full bg-primary text-sm font-semibold text-primary-foreground transition-all duration-150 hover:bg-primary/90 active:scale-95 disabled:opacity-60"
+          >
+            <span
+              v-if="savingAdd"
+              class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground align-middle"
+            ></span>
             <span v-else>Qo'shish</span>
           </button>
         </div>
       </form>
     </AppModal>
 
-    <AppModal :open="!!editItem" title="Kassirni tahrirlash" @close="editItem = null">
+    <AppModal
+      :open="!!editItem"
+      title="Kassirni tahrirlash"
+      @close="editItem = null"
+    >
       <form class="space-y-3" @submit.prevent="submitEdit">
         <div>
           <label class="text-sm font-medium">Ism familiya</label>
-          <input v-model="editForm.full_name" required
-            class="mt-1 h-11 w-full rounded-lg border border-border bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10" />
+          <input
+            v-model="editForm.full_name"
+            required
+            class="mt-1 h-11 w-full rounded-lg border border-border bg-input px-3 text-sm outline-none transition-all duration-150 focus:border-primary/50 focus:ring-4 focus:ring-primary/10"
+          />
         </div>
         <label class="flex items-center gap-2 text-sm">
-          <input v-model="editForm.is_active" type="checkbox" class="h-4 w-4 accent-primary" />
+          <input
+            v-model="editForm.is_active"
+            type="checkbox"
+            class="h-4 w-4 accent-primary"
+          />
           Faol
         </label>
         <div class="flex gap-2 pt-1">
-          <button type="button"
+          <button
+            type="button"
             class="h-11 flex-1 rounded-full border border-border text-sm font-medium transition-colors duration-150 hover:bg-secondary"
-            @click="editItem = null">
+            @click="editItem = null"
+          >
             Bekor qilish
           </button>
-          <button type="submit" :disabled="savingEdit"
-            class="h-11 flex-1 rounded-full bg-primary text-sm font-semibold text-primary-foreground transition-all duration-150 hover:bg-primary/90 active:scale-95 disabled:opacity-60">
-            <span v-if="savingEdit"
-              class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground align-middle"></span>
+          <button
+            type="submit"
+            :disabled="savingEdit"
+            class="h-11 flex-1 rounded-full bg-primary text-sm font-semibold text-primary-foreground transition-all duration-150 hover:bg-primary/90 active:scale-95 disabled:opacity-60"
+          >
+            <span
+              v-if="savingEdit"
+              class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground align-middle"
+            ></span>
             <span v-else>Yangilash</span>
           </button>
         </div>
       </form>
     </AppModal>
 
-    <AppModal :open="!!deleteItem" title="O'chirishni tasdiqlang" @close="deleteItem = null">
+    <AppModal
+      :open="!!deleteItem"
+      title="O'chirishni tasdiqlang"
+      @close="deleteItem = null"
+    >
       <p class="text-sm text-muted">
-        "<span class="font-medium text-gray-900">{{ deleteItem?.full_name }}</span>" kassirini o'chirmoqchimisiz?
+        "<span class="font-medium text-gray-900">{{
+          deleteItem?.full_name
+        }}</span
+        >" kassirini o'chirmoqchimisiz?
       </p>
       <div class="mt-4 flex justify-end gap-2">
         <button
           class="rounded-full border border-border px-4 py-2 text-sm transition-colors duration-150 hover:bg-secondary"
-          @click="deleteItem = null">
+          @click="deleteItem = null"
+        >
           Bekor qilish
         </button>
-        <button :disabled="deleting"
+        <button
+          :disabled="deleting"
           class="rounded-full bg-destructive px-4 py-2 text-sm text-white transition-all duration-150 hover:bg-destructive/90 active:scale-95 disabled:opacity-60"
-          @click="confirmDelete">
-          <span v-if="deleting"
-            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white align-middle"></span>
+          @click="confirmDelete"
+        >
+          <span
+            v-if="deleting"
+            class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white align-middle"
+          ></span>
           <span v-else>O'chirish</span>
         </button>
       </div>
@@ -302,11 +400,15 @@ function fmtDate(d) {
 }
 
 .card-enter-active {
-  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+  transition:
+    opacity 0.3s ease-out,
+    transform 0.3s ease-out;
 }
 
 .card-leave-active {
-  transition: opacity 0.2s ease-in, transform 0.2s ease-in;
+  transition:
+    opacity 0.2s ease-in,
+    transform 0.2s ease-in;
   position: absolute;
 }
 
@@ -367,7 +469,6 @@ function fmtDate(d) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-
   .page-enter,
   .fade-in-up,
   .card-enter-active,

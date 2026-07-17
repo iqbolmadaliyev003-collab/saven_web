@@ -152,10 +152,18 @@ async function exportCsv() {
       <AppCard class="p-5 overflow-visible">
         <div class="mb-4 flex flex-wrap items-center gap-2">
           <div class="relative min-w-[200px] flex-1 group">
-            <span
-              class="absolute left-3 top-1/2 -translate-y-1/2 text-muted transition-transform duration-200 group-focus-within:scale-110"
-              >🔍</span
+            <svg
+              viewBox="0 0 24 24"
+              class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted transition-transform duration-200 group-focus-within:scale-110"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
             >
+              <circle cx="11" cy="11" r="7" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
             <input
               v-model="q"
               placeholder="Mijoz yoki kassir bo'yicha qidirish"
@@ -170,11 +178,18 @@ async function exportCsv() {
               @click="filterOpen = !filterOpen"
             >
               Filtr
-              <span
-                class="inline-block transition-transform duration-300"
+              <svg
+                viewBox="0 0 24 24"
+                class="h-3.5 w-3.5 transition-transform duration-300"
                 :class="filterOpen ? 'rotate-180' : 'rotate-0'"
-                >▾</span
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
               >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
               <span
                 v-if="activeFilterCount"
                 class="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground animate-pop"
@@ -268,14 +283,25 @@ async function exportCsv() {
 
           <button
             :disabled="exporting"
-            class="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md active:scale-95 disabled:opacity-60"
+            class="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium !text-white shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md active:scale-95 disabled:opacity-60"
             @click="exportCsv"
           >
-            <span
-              class="transition-transform duration-200 group-hover:-translate-y-0.5"
-              >⬇</span
+            <svg
+              viewBox="0 0 24 24"
+              class="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:-translate-y-0.5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
             >
-            {{ exporting ? "Yuklanmoqda..." : "Yuklash" }}
+              <path d="M12 15V3" />
+              <path d="m7 10 5 5 5-5" />
+              <path d="M20 21H4" />
+            </svg>
+            <span class="!text-white">{{
+              exporting ? "Yuklanmoqda..." : "Yuklash"
+            }}</span>
           </button>
 
           <span class="text-xs text-muted transition-opacity duration-300"
@@ -340,7 +366,20 @@ async function exportCsv() {
               <tr>
                 <td colspan="6" class="py-14 text-center">
                   <div class="flex flex-col items-center gap-2 fade-in-up">
-                    <span class="text-3xl">🔎</span>
+                    <svg
+                      viewBox="0 0 24 24"
+                      class="h-8 w-8 text-muted"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <circle cx="11" cy="11" r="7" />
+                      <path d="m21 21-4.3-4.3" />
+                      <path d="m8.5 8.5 5 5" />
+                      <path d="m13.5 8.5-5 5" />
+                    </svg>
                     <span class="text-muted">Natija topilmadi</span>
                   </div>
                 </td>
@@ -356,18 +395,39 @@ async function exportCsv() {
           <span class="text-muted">Natija {{ filtered.length }} dan</span>
           <div class="flex items-center gap-3">
             <button
-              class="rounded-full border border-border px-3 py-1.5 transition-all duration-150 hover:bg-secondary active:scale-90 disabled:opacity-40 disabled:hover:bg-transparent"
+              class="flex h-8 w-8 items-center justify-center rounded-full border border-border transition-all duration-150 hover:bg-secondary active:scale-90 disabled:opacity-40 disabled:hover:bg-transparent"
               :disabled="page === 1"
               @click="prevPage"
             >
-              ‹
+              <svg
+                viewBox="0 0 24 24"
+                class="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="m15 18-6-6 6-6" />
+              </svg>
             </button>
             <button
-              class="rounded-full bg-primary px-4 py-1.5 font-medium text-primary-foreground shadow-sm transition-all duration-150 hover:bg-primary/90 hover:shadow-md active:scale-95 disabled:opacity-60 disabled:hover:shadow-none"
+              class="flex items-center gap-1 rounded-full bg-primary px-4 py-1.5 font-medium !text-white shadow-sm transition-all duration-150 hover:bg-primary/90 hover:shadow-md active:scale-95 disabled:opacity-60 disabled:hover:shadow-none"
               :disabled="page === totalPages"
               @click="nextPage"
             >
-              Keyingi ›
+              Keyingi
+              <svg
+                viewBox="0 0 24 24"
+                class="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="m9 18 6-6-6-6" />
+              </svg>
             </button>
             <span class="text-muted transition-all duration-200"
               >Sahifa {{ page }} / {{ totalPages }}</span

@@ -102,9 +102,11 @@ watch(range, load);
       >
         <h1 class="text-xl font-bold">Statistika</h1>
 
-        <div class="relative flex gap-1 rounded-full bg-secondary p-1">
+        <div
+          class="relative flex gap-1 rounded-full bg-secondary p-1 text-sm font-medium"
+        >
           <span
-            class="absolute inset-y-1 left-2 rounded-full bg-[#f2662d] shadow-md transition-transform duration-300 ease-[cubic-bezier(.34,1.56,.64,1)]"
+            class="absolute inset-y-1 rounded-full bg-[#f2662d] shadow-md transition-transform duration-300 ease-[cubic-bezier(.34,1.56,.64,1)]"
             :style="{
               width: `calc((100% - 8px - ${(ranges.length - 1) * 4}px) / ${ranges.length})`,
               transform: `translateX(calc(${rangeIndex} * (100% + 4px)))`,
@@ -128,7 +130,7 @@ watch(range, load);
 
       <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
         <AppCard
-          class="reveal p-4 transition-transform duration-300 hover:-translate-y-1 hover:shadow-md"
+          class="reveal p-4 text-center transition-transform duration-300 hover:-translate-y-1 hover:shadow-md"
           style="--d: 80ms"
         >
           <p class="text-xs text-muted">Jami tashrif</p>
@@ -137,7 +139,7 @@ watch(range, load);
           </p>
         </AppCard>
         <AppCard
-          class="reveal p-4 transition-transform duration-300 hover:-translate-y-1 hover:shadow-md"
+          class="reveal p-4 text-center transition-transform duration-300 hover:-translate-y-1 hover:shadow-md"
           style="--d: 140ms"
         >
           <p class="text-xs text-muted">O'rtacha xaridlar cheki</p>
@@ -146,7 +148,7 @@ watch(range, load);
           </p>
         </AppCard>
         <AppCard
-          class="reveal p-4 transition-transform duration-300 hover:-translate-y-1 hover:shadow-md"
+          class="reveal p-4 text-center transition-transform duration-300 hover:-translate-y-1 hover:shadow-md"
           style="--d: 200ms"
         >
           <p class="text-xs text-muted">Jami daromad</p>
@@ -155,7 +157,7 @@ watch(range, load);
           </p>
         </AppCard>
         <AppCard
-          class="reveal p-4 transition-transform duration-300 hover:-translate-y-1 hover:shadow-md"
+          class="reveal p-4 text-center transition-transform duration-300 hover:-translate-y-1 hover:shadow-md"
           style="--d: 260ms"
         >
           <p class="text-xs text-muted">Berilgan chegirma summasi</p>

@@ -65,8 +65,8 @@ const STATUS_LABEL = {
       <AppCard class="reveal p-5" style="--d: 0ms">
         <h1 class="text-xl font-bold">Chegirma</h1>
         <p class="mt-1 text-xs text-muted">
-          Biznesingizga biriktirilgan joriy chegirma foizi. Foizni o'zgartirish uchun so'rov
-          yuboring — admin ko'rib chiqib tasdiqlaydi.
+          Biznesingizga biriktirilgan joriy chegirma foizi. Foizni o'zgartirish
+          uchun so'rov yuboring — admin ko'rib chiqib tasdiqlaydi.
         </p>
       </AppCard>
 
@@ -84,8 +84,10 @@ const STATUS_LABEL = {
             {{ currentPercent !== null ? `${currentPercent}%` : "—" }}
           </p>
           <button
-            class="mt-4 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-all duration-200 hover:bg-primary/90 hover:shadow-md active:scale-95 disabled:opacity-50"
-            :disabled="!!pendingRequest" @click="openRequest">
+            class="mt-4 rounded-full bg-primary px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-primary/90 hover:shadow-md active:scale-95 disabled:opacity-50"
+            :disabled="!!pendingRequest"
+            @click="openRequest"
+          >
             Foizni o'zgartirish
           </button>
           <p v-if="pendingRequest" class="mt-2 text-xs text-muted">
@@ -96,34 +98,55 @@ const STATUS_LABEL = {
         <AppCard v-if="pendingRequest" class="reveal p-5" style="--d: 120ms">
           <p class="text-xs text-muted">So'rov holati</p>
           <p class="mt-1 text-sm font-semibold">
-            {{ pendingRequest.old_percent }}% → {{ pendingRequest.new_percent }}%
+            {{ pendingRequest.old_percent }}% →
+            {{ pendingRequest.new_percent }}%
           </p>
-          <p class="mt-2 inline-block rounded-full bg-secondary px-3 py-1 text-xs font-medium">
+          <p
+            class="mt-2 inline-block rounded-full bg-secondary px-3 py-1 text-xs font-medium"
+          >
             {{ STATUS_LABEL[pendingRequest.status] || pendingRequest.status }}
           </p>
           <p v-if="pendingRequest.reason" class="mt-2 text-xs text-muted">
             Sabab: {{ pendingRequest.reason }}
           </p>
         </AppCard>
-        <p v-else class="col-span-full text-xs text-muted">Hozircha ko'rib chiqilayotgan so'rov yo'q</p>
+        <p v-else class="col-span-full text-xs text-muted">
+          Hozircha ko'rib chiqilayotgan so'rov yo'q
+        </p>
       </div>
     </div>
 
-    <AppModal :open="requestOpen" title="Chegirma foizini o'zgartirish" @close="requestOpen = false">
+    <AppModal
+      :open="requestOpen"
+      title="Chegirma foizini o'zgartirish"
+      @close="requestOpen = false"
+    >
       <form class="space-y-3" @submit.prevent="submitRequest">
         <div class="field-in" style="--d: 0ms">
           <label class="text-sm font-medium">Yangi foiz (%)</label>
-          <input v-model.number="form.new_percent" type="number" min="1" max="100" required
-            class="mt-1 h-11 w-full rounded-lg border border-border bg-input px-3 text-sm transition-shadow focus:ring-2 focus:ring-primary/40" />
+          <input
+            v-model.number="form.new_percent"
+            type="number"
+            min="1"
+            max="100"
+            required
+            class="mt-1 h-11 w-full rounded-lg border border-border bg-input px-3 text-sm transition-shadow focus:ring-2 focus:ring-primary/40"
+          />
         </div>
         <div class="field-in" style="--d: 60ms">
           <label class="text-sm font-medium">Sabab (ixtiyoriy)</label>
-          <textarea v-model="form.reason" rows="3"
-            class="mt-1 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm transition-shadow focus:ring-2 focus:ring-primary/40"></textarea>
+          <textarea
+            v-model="form.reason"
+            rows="3"
+            class="mt-1 w-full rounded-lg border border-border bg-input px-3 py-2 text-sm transition-shadow focus:ring-2 focus:ring-primary/40"
+          ></textarea>
         </div>
-        <button type="submit" :disabled="submitting"
+        <button
+          type="submit"
+          :disabled="submitting"
           class="field-in h-11 w-full rounded-full bg-primary text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 hover:shadow-md active:scale-[0.98] disabled:opacity-60"
-          style="--d: 120ms">
+          style="--d: 120ms"
+        >
           {{ submitting ? "Yuborilmoqda..." : "So'rovni yuborish" }}
         </button>
       </form>
@@ -193,7 +216,12 @@ const STATUS_LABEL = {
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.6),
+    transparent
+  );
   animation: shimmer 1.4s infinite;
 }
 
@@ -208,7 +236,6 @@ const STATUS_LABEL = {
 }
 
 @media (prefers-reduced-motion: reduce) {
-
   .reveal,
   .percent-pop,
   .field-in,
